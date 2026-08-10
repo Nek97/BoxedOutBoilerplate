@@ -1,303 +1,312 @@
 {
-  "collection": "@nestjs/schematics",
-  "compilerOptions": {
-    "deleteOutDir": false,
-    "webpack": false,
-    "plugins": [
-      {
-        "name": "@nestjs/graphql",
-        "options": {
-          "typeFileNameSuffix": [
-            ".input.ts",
-            ".args.ts",
-            ".entity.ts",
-            ".type.ts"
-          ],
-          "introspectComments": true
-        }
-      },
-      {
-        "name": "@nestjs/swagger/plugin",
-        "options": {
-          "classValidatorShim": true,
-          "dtoFileNameSuffix": [
-            ".type.ts"
-          ]
-        }
-      }
-    ]
-  },
-  "monorepo": true,
-  "projects": {
-    "cli": {
-      "type": "application",
-      "root": "apps/cli",
-      "entryFile": "main",
-      "sourceRoot": "apps/cli/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/cli/tsconfig.build.json",
-        "assets": [
-          {
-            "include": "../../../libs/boxedout-libs/db-exchange/**/*.sql",
-            "outDir": "env/dist/libs/boxedout-libs/db-exchange",
-            "watchAssets": true
-          },
-          {
-            "include": "../../../libs/boxedout-libs/db-boxedoutSys/**/*.sql",
-            "outDir": "env/dist/libs/boxedout-libs/db-boxedoutSys",
-            "watchAssets": true
-          },
-          {
-            "include": "../../../libs/boxedout-libs/db-boxedoutAdmin/**/*.sql",
-            "outDir": "env/dist/libs/boxedout-libs/db-boxedoutAdmin",
-            "watchAssets": true
-          },
-          {
-            "include": "../../../utils/scripts/documentId-hash/dist/**",
-            "outDir": "env/dist/apps/cli/src/scripts/documentId-hash"
-          }
-        ]
-      }
-    },
-    "user-provider": {
-      "type": "application",
-      "root": "apps/user-provider",
-      "entryFile": "main",
-      "sourceRoot": "apps/user-provider/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/user-provider/tsconfig.build.json"
-      }
-    },
-    "manage-panel": {
-      "type": "application",
-      "root": "apps/manage-panel",
-      "entryFile": "main",
-      "sourceRoot": "apps/manage-panel/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/manage-panel/tsconfig.build.json"
-      }
-    },
-    "kafka-app": {
-      "type": "application",
-      "root": "apps/kafka-app",
-      "entryFile": "main",
-      "sourceRoot": "apps/kafka-app/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/kafka-app/tsconfig.build.json"
-      }
-    },
-    "boxedout/manage-user": {
-      "type": "library",
-      "root": "libs/boxedout/manage-user",
-      "sourceRoot": "libs/boxedout/manage-user/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/boxedout/manage-user/tsconfig.json"
-      }
-    },
-    "boxedout/user": {
-      "type": "library",
-      "root": "libs/boxedout/user",
-      "sourceRoot": "libs/boxedout/user/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/boxedout/user/tsconfig.json"
-      }
-    },
-    "boxedout/auth": {
-      "type": "library",
-      "root": "libs/boxedout/auth",
-      "sourceRoot": "libs/boxedout/auth/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/boxedout/auth/tsconfig.json"
-      }
-    },
-    "boxedout/kafka-user": {
-      "type": "library",
-      "root": "libs/boxedout/kafka-user",
-      "sourceRoot": "libs/boxedout/kafka-user/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/boxedout/kafka-user/tsconfig.json"
-      }
-    },
-    "boxedout/skeleton-boxedout-module": {
-      "type": "library",
-      "root": "libs/boxedout/skeleton-boxedout-module",
-      "sourceRoot": "libs/boxedout/skeleton-boxedout-module/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/boxedout/skeleton-boxedout-module/tsconfig.json"
-      }
-    },
-    "boxedout-libs/db-boxedout": {
-      "type": "library",
-      "root": "libs/boxedout-libs/db-boxedout",
-      "sourceRoot": "libs/boxedout-libs/db-boxedout/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/boxedout-libs/db-boxedout/tsconfig.json"
-      }
-    },
-    "boxedout-libs/db-boxedoutAdmin": {
-      "type": "library",
-      "root": "libs/boxedout-libs/db-boxedoutAdmin",
-      "sourceRoot": "libs/boxedout-libs/db-boxedoutAdmin/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/boxedout-libs/db-boxedoutAdmin/tsconfig.json"
-      }
-    },
-    "boxedout-libs/errors": {
-      "type": "library",
-      "root": "libs/boxedout-libs/errors",
-      "sourceRoot": "libs/boxedout-libs/errors/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/boxedout-libs/errors/tsconfig.json"
-      }
-    },
-    "boxedout-libs/shared": {
-      "type": "library",
-      "root": "libs/boxedout-libs/shared",
-      "sourceRoot": "libs/boxedout-libs/shared/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/boxedout-libs/shared/tsconfig.json"
-      }
-    },
-    "boxedout-libs/types-boxedout": {
-      "type": "library",
-      "root": "libs/boxedout-libs/types-boxedout",
-      "sourceRoot": "libs/boxedout-libs/types-boxedout/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/boxedout-libs/types-boxedout/tsconfig.json"
-      }
-    },
-    "common/database": {
-      "type": "library",
-      "root": "libs/common/database",
-      "sourceRoot": "libs/common/database/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/common/database/tsconfig.json"
-      }
-    },
-    "common/ag-grid": {
-      "type": "library",
-      "root": "libs/common/ag-grid",
-      "sourceRoot": "libs/common/ag-grid/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/common/ag-grid/tsconfig.json"
-      }
-    },
-    "common/aws-helpers": {
-      "type": "library",
-      "root": "libs/common/aws-helpers",
-      "sourceRoot": "libs/common/aws-helpers/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/common/aws-helpers/tsconfig.json"
-      }
-    },
-    "common/data-loader": {
-      "type": "library",
-      "root": "libs/common/data-loader",
-      "sourceRoot": "libs/common/data-loader/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/common/data-loader/tsconfig.json"
-      }
-    },
-    "common/field-middleware": {
-      "type": "library",
-      "root": "libs/common/field-middleware",
-      "sourceRoot": "libs/common/field-middleware/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/common/field-middleware/tsconfig.json"
-      }
-    },
-    "common/graphql": {
-      "type": "library",
-      "root": "libs/common/graphql",
-      "sourceRoot": "libs/common/graphql/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/common/graphql/tsconfig.json"
-      }
-    },
-    "common/interfaces": {
-      "type": "library",
-      "root": "libs/common/interfaces",
-      "sourceRoot": "libs/common/interfaces/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/common/interfaces/tsconfig.json"
-      }
-    },
-    "common/logger": {
-      "type": "library",
-      "root": "libs/common/logger",
-      "sourceRoot": "libs/common/logger/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/common/logger/tsconfig.json"
-      }
-    },
-    "common/jest": {
-      "type": "library",
-      "root": "libs/common/jest",
-      "sourceRoot": "libs/common/jest/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/common/jest/tsconfig.json"
-      }
-    },
-    "common/utils": {
-      "type": "library",
-      "root": "libs/common/utils",
-      "sourceRoot": "libs/common/utils/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/common/utils/tsconfig.json"
-      }
-    },
-    "common/types": {
-      "type": "library",
-      "root": "libs/common/types",
-      "sourceRoot": "libs/common/types/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/common/types/tsconfig.json"
-      }
-    },
-    "common/kafka": {
-      "type": "library",
-      "root": "libs/common/kafka",
-      "entryFile": "index",
-      "sourceRoot": "libs/common/kafka/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/common/kafka/tsconfig.json"
-      }
-    },
-    "boxedout-libs/redis": {
-      "type": "library",
-      "root": "libs/boxedout-libs/redis",
-      "entryFile": "index",
-      "sourceRoot": "libs/boxedout-libs/redis/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/boxedout-libs/redis/tsconfig.json"
-      }
-    },
-    "boxedout-libs/sentry": {
-      "type": "library",
-      "root": "libs/boxedout-libs/sentry",
-      "entryFile": "index",
-      "sourceRoot": "libs/boxedout-libs/sentry/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/boxedout-libs/sentry/tsconfig.json"
-      }
-    },
-    "boxedout-libs/identity-manager-client": {
-      "type": "library",
-      "root": "libs/boxedout-libs/identity-manager-client",
-      "entryFile": "index",
-      "sourceRoot": "libs/boxedout-libs/identity-manager-client/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/boxedout-libs/identity-manager-client/tsconfig.json"
-      }
-    },
-    "skeleton-app": {
-      "type": "application",
-      "root": "apps/skeleton-app",
-      "entryFile": "main",
-      "sourceRoot": "apps/skeleton-app/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/skeleton-app/tsconfig.app.json"
-      }
-    }
-  }
+    "collection":  "@nestjs/schematics",
+    "compilerOptions":  {
+                            "deleteOutDir":  false,
+                            "webpack":  false,
+                            "plugins":  [
+                                            {
+                                                "name":  "@nestjs/graphql",
+                                                "options":  {
+                                                                "typeFileNameSuffix":  [
+                                                                                           ".input.ts",
+                                                                                           ".args.ts",
+                                                                                           ".entity.ts",
+                                                                                           ".type.ts"
+                                                                                       ],
+                                                                "introspectComments":  true
+                                                            }
+                                            },
+                                            {
+                                                "name":  "@nestjs/swagger/plugin",
+                                                "options":  {
+                                                                "classValidatorShim":  true,
+                                                                "dtoFileNameSuffix":  [
+                                                                                          ".type.ts"
+                                                                                      ]
+                                                            }
+                                            }
+                                        ]
+                        },
+    "monorepo":  true,
+    "projects":  {
+                     "cli":  {
+                                 "type":  "application",
+                                 "root":  "apps/cli",
+                                 "entryFile":  "main",
+                                 "sourceRoot":  "apps/cli/src",
+                                 "compilerOptions":  {
+                                                         "tsConfigPath":  "apps/cli/tsconfig.build.json",
+                                                         "assets":  [
+                                                                        {
+                                                                            "include":  "../../../libs/boxedout-libs/db-exchange/**/*.sql",
+                                                                            "outDir":  "env/dist/libs/boxedout-libs/db-exchange",
+                                                                            "watchAssets":  true
+                                                                        },
+                                                                        {
+                                                                            "include":  "../../../libs/boxedout-libs/db-boxedoutSys/**/*.sql",
+                                                                            "outDir":  "env/dist/libs/boxedout-libs/db-boxedoutSys",
+                                                                            "watchAssets":  true
+                                                                        },
+                                                                        {
+                                                                            "include":  "../../../libs/boxedout-libs/db-boxedoutAdmin/**/*.sql",
+                                                                            "outDir":  "env/dist/libs/boxedout-libs/db-boxedoutAdmin",
+                                                                            "watchAssets":  true
+                                                                        },
+                                                                        {
+                                                                            "include":  "../../../utils/scripts/documentId-hash/dist/**",
+                                                                            "outDir":  "env/dist/apps/cli/src/scripts/documentId-hash"
+                                                                        }
+                                                                    ]
+                                                     }
+                             },
+                     "user-provider":  {
+                                           "type":  "application",
+                                           "root":  "apps/user-provider",
+                                           "entryFile":  "main",
+                                           "sourceRoot":  "apps/user-provider/src",
+                                           "compilerOptions":  {
+                                                                   "tsConfigPath":  "apps/user-provider/tsconfig.build.json"
+                                                               }
+                                       },
+                     "manage-panel":  {
+                                          "type":  "application",
+                                          "root":  "apps/manage-panel",
+                                          "entryFile":  "main",
+                                          "sourceRoot":  "apps/manage-panel/src",
+                                          "compilerOptions":  {
+                                                                  "tsConfigPath":  "apps/manage-panel/tsconfig.build.json"
+                                                              }
+                                      },
+                     "kafka-app":  {
+                                       "type":  "application",
+                                       "root":  "apps/kafka-app",
+                                       "entryFile":  "main",
+                                       "sourceRoot":  "apps/kafka-app/src",
+                                       "compilerOptions":  {
+                                                               "tsConfigPath":  "apps/kafka-app/tsconfig.build.json"
+                                                           }
+                                   },
+                     "boxedout/manage-user":  {
+                                                  "type":  "library",
+                                                  "root":  "libs/boxedout/manage-user",
+                                                  "sourceRoot":  "libs/boxedout/manage-user/src",
+                                                  "compilerOptions":  {
+                                                                          "tsConfigPath":  "libs/boxedout/manage-user/tsconfig.json"
+                                                                      }
+                                              },
+                     "boxedout/user":  {
+                                           "type":  "library",
+                                           "root":  "libs/boxedout/user",
+                                           "sourceRoot":  "libs/boxedout/user/src",
+                                           "compilerOptions":  {
+                                                                   "tsConfigPath":  "libs/boxedout/user/tsconfig.json"
+                                                               }
+                                       },
+                     "boxedout/auth":  {
+                                           "type":  "library",
+                                           "root":  "libs/boxedout/auth",
+                                           "sourceRoot":  "libs/boxedout/auth/src",
+                                           "compilerOptions":  {
+                                                                   "tsConfigPath":  "libs/boxedout/auth/tsconfig.json"
+                                                               }
+                                       },
+                     "boxedout/kafka-user":  {
+                                                 "type":  "library",
+                                                 "root":  "libs/boxedout/kafka-user",
+                                                 "sourceRoot":  "libs/boxedout/kafka-user/src",
+                                                 "compilerOptions":  {
+                                                                         "tsConfigPath":  "libs/boxedout/kafka-user/tsconfig.json"
+                                                                     }
+                                             },
+                     "boxedout/skeleton-boxedout-module":  {
+                                                               "type":  "library",
+                                                               "root":  "libs/boxedout/skeleton-boxedout-module",
+                                                               "sourceRoot":  "libs/boxedout/skeleton-boxedout-module/src",
+                                                               "compilerOptions":  {
+                                                                                       "tsConfigPath":  "libs/boxedout/skeleton-boxedout-module/tsconfig.json"
+                                                                                   }
+                                                           },
+                     "boxedout-libs/db-boxedout":  {
+                                                       "type":  "library",
+                                                       "root":  "libs/boxedout-libs/db-boxedout",
+                                                       "sourceRoot":  "libs/boxedout-libs/db-boxedout/src",
+                                                       "compilerOptions":  {
+                                                                               "tsConfigPath":  "libs/boxedout-libs/db-boxedout/tsconfig.json"
+                                                                           }
+                                                   },
+                     "boxedout-libs/db-boxedoutAdmin":  {
+                                                            "type":  "library",
+                                                            "root":  "libs/boxedout-libs/db-boxedoutAdmin",
+                                                            "sourceRoot":  "libs/boxedout-libs/db-boxedoutAdmin/src",
+                                                            "compilerOptions":  {
+                                                                                    "tsConfigPath":  "libs/boxedout-libs/db-boxedoutAdmin/tsconfig.json"
+                                                                                }
+                                                        },
+                     "boxedout-libs/errors":  {
+                                                  "type":  "library",
+                                                  "root":  "libs/boxedout-libs/errors",
+                                                  "sourceRoot":  "libs/boxedout-libs/errors/src",
+                                                  "compilerOptions":  {
+                                                                          "tsConfigPath":  "libs/boxedout-libs/errors/tsconfig.json"
+                                                                      }
+                                              },
+                     "boxedout-libs/shared":  {
+                                                  "type":  "library",
+                                                  "root":  "libs/boxedout-libs/shared",
+                                                  "sourceRoot":  "libs/boxedout-libs/shared/src",
+                                                  "compilerOptions":  {
+                                                                          "tsConfigPath":  "libs/boxedout-libs/shared/tsconfig.json"
+                                                                      }
+                                              },
+                     "boxedout-libs/types-boxedout":  {
+                                                          "type":  "library",
+                                                          "root":  "libs/boxedout-libs/types-boxedout",
+                                                          "sourceRoot":  "libs/boxedout-libs/types-boxedout/src",
+                                                          "compilerOptions":  {
+                                                                                  "tsConfigPath":  "libs/boxedout-libs/types-boxedout/tsconfig.json"
+                                                                              }
+                                                      },
+                     "common/database":  {
+                                             "type":  "library",
+                                             "root":  "libs/common/database",
+                                             "sourceRoot":  "libs/common/database/src",
+                                             "compilerOptions":  {
+                                                                     "tsConfigPath":  "libs/common/database/tsconfig.json"
+                                                                 }
+                                         },
+                     "common/ag-grid":  {
+                                            "type":  "library",
+                                            "root":  "libs/common/ag-grid",
+                                            "sourceRoot":  "libs/common/ag-grid/src",
+                                            "compilerOptions":  {
+                                                                    "tsConfigPath":  "libs/common/ag-grid/tsconfig.json"
+                                                                }
+                                        },
+                     "common/aws-helpers":  {
+                                                "type":  "library",
+                                                "root":  "libs/common/aws-helpers",
+                                                "sourceRoot":  "libs/common/aws-helpers/src",
+                                                "compilerOptions":  {
+                                                                        "tsConfigPath":  "libs/common/aws-helpers/tsconfig.json"
+                                                                    }
+                                            },
+                     "common/data-loader":  {
+                                                "type":  "library",
+                                                "root":  "libs/common/data-loader",
+                                                "sourceRoot":  "libs/common/data-loader/src",
+                                                "compilerOptions":  {
+                                                                        "tsConfigPath":  "libs/common/data-loader/tsconfig.json"
+                                                                    }
+                                            },
+                     "common/field-middleware":  {
+                                                     "type":  "library",
+                                                     "root":  "libs/common/field-middleware",
+                                                     "sourceRoot":  "libs/common/field-middleware/src",
+                                                     "compilerOptions":  {
+                                                                             "tsConfigPath":  "libs/common/field-middleware/tsconfig.json"
+                                                                         }
+                                                 },
+                     "common/graphql":  {
+                                            "type":  "library",
+                                            "root":  "libs/common/graphql",
+                                            "sourceRoot":  "libs/common/graphql/src",
+                                            "compilerOptions":  {
+                                                                    "tsConfigPath":  "libs/common/graphql/tsconfig.json"
+                                                                }
+                                        },
+                     "common/interfaces":  {
+                                               "type":  "library",
+                                               "root":  "libs/common/interfaces",
+                                               "sourceRoot":  "libs/common/interfaces/src",
+                                               "compilerOptions":  {
+                                                                       "tsConfigPath":  "libs/common/interfaces/tsconfig.json"
+                                                                   }
+                                           },
+                     "common/logger":  {
+                                           "type":  "library",
+                                           "root":  "libs/common/logger",
+                                           "sourceRoot":  "libs/common/logger/src",
+                                           "compilerOptions":  {
+                                                                   "tsConfigPath":  "libs/common/logger/tsconfig.json"
+                                                               }
+                                       },
+                     "common/jest":  {
+                                         "type":  "library",
+                                         "root":  "libs/common/jest",
+                                         "sourceRoot":  "libs/common/jest/src",
+                                         "compilerOptions":  {
+                                                                 "tsConfigPath":  "libs/common/jest/tsconfig.json"
+                                                             }
+                                     },
+                     "common/utils":  {
+                                          "type":  "library",
+                                          "root":  "libs/common/utils",
+                                          "sourceRoot":  "libs/common/utils/src",
+                                          "compilerOptions":  {
+                                                                  "tsConfigPath":  "libs/common/utils/tsconfig.json"
+                                                              }
+                                      },
+                     "common/types":  {
+                                          "type":  "library",
+                                          "root":  "libs/common/types",
+                                          "sourceRoot":  "libs/common/types/src",
+                                          "compilerOptions":  {
+                                                                  "tsConfigPath":  "libs/common/types/tsconfig.json"
+                                                              }
+                                      },
+                     "common/kafka":  {
+                                          "type":  "library",
+                                          "root":  "libs/common/kafka",
+                                          "entryFile":  "index",
+                                          "sourceRoot":  "libs/common/kafka/src",
+                                          "compilerOptions":  {
+                                                                  "tsConfigPath":  "libs/common/kafka/tsconfig.json"
+                                                              }
+                                      },
+                     "boxedout-libs/redis":  {
+                                                 "type":  "library",
+                                                 "root":  "libs/boxedout-libs/redis",
+                                                 "entryFile":  "index",
+                                                 "sourceRoot":  "libs/boxedout-libs/redis/src",
+                                                 "compilerOptions":  {
+                                                                         "tsConfigPath":  "libs/boxedout-libs/redis/tsconfig.json"
+                                                                     }
+                                             },
+                     "boxedout-libs/sentry":  {
+                                                  "type":  "library",
+                                                  "root":  "libs/boxedout-libs/sentry",
+                                                  "entryFile":  "index",
+                                                  "sourceRoot":  "libs/boxedout-libs/sentry/src",
+                                                  "compilerOptions":  {
+                                                                          "tsConfigPath":  "libs/boxedout-libs/sentry/tsconfig.json"
+                                                                      }
+                                              },
+                     "boxedout-libs/identity-manager-client":  {
+                                                                   "type":  "library",
+                                                                   "root":  "libs/boxedout-libs/identity-manager-client",
+                                                                   "entryFile":  "index",
+                                                                   "sourceRoot":  "libs/boxedout-libs/identity-manager-client/src",
+                                                                   "compilerOptions":  {
+                                                                                           "tsConfigPath":  "libs/boxedout-libs/identity-manager-client/tsconfig.json"
+                                                                                       }
+                                                               },
+                     "skeleton-app":  {
+                                          "type":  "application",
+                                          "root":  "apps/skeleton-app",
+                                          "entryFile":  "main",
+                                          "sourceRoot":  "apps/skeleton-app/src",
+                                          "compilerOptions":  {
+                                                                  "tsConfigPath":  "apps/skeleton-app/tsconfig.app.json"
+                                                              }
+                                      },
+                     "boxedout-libs/modern-infra":  {
+                                                        "root":  "libs/boxedout-libs/modern-infra",
+                                                        "sourceRoot":  "libs/boxedout-libs/modern-infra/src",
+                                                        "entryFile":  "index",
+                                                        "type":  "library",
+                                                        "compilerOptions":  {
+                                                                                "tsConfigPath":  "libs/boxedout-libs/modern-infra/tsconfig.lib.json"
+                                                                            }
+                                                    }
+                 }
 }
