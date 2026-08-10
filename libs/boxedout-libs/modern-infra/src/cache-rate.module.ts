@@ -1,7 +1,6 @@
 // @ts-nocheck
-import { Module, Global } from '@nestjs/common';
+import { Module, Global, CacheModule } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { CacheModule } from '@nestjs/cache-manager';
 
 @Global()
 @Module({
