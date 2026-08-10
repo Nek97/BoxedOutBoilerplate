@@ -7,7 +7,7 @@ on:
       - 'master' # PRs that target master do not execute the action automatically
 
 env:
-  NODE_VERSION: 16
+  NODE_VERSION: 22
   RC_VERSION: 1
 jobs:
   version-bump:

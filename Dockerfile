@@ -2,7 +2,7 @@
 # PREPARATION
 #
 FROM scionproto/docker-caps as caps
-FROM node:16 AS base
+FROM node:22 AS base
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 
@@ -92,7 +92,7 @@ RUN npm run set:proj all && npm run build && NODE_ENV=docker APP_DRY_RUN=1 APP_D
 # PRODUCTION STAGE
 #
 
-FROM public.ecr.aws/lambda/nodejs:14 AS prepare-prod
+FROM public.ecr.aws/lambda/nodejs:22 AS prepare-prod
 
 # the id/name of the app to use for
 # the production image creation
@@ -133,7 +133,7 @@ RUN yum remove -y gcc gcc-c++ make
 
 
 # used to distribute the apps locally
-FROM node:16-alpine AS distribution
+FROM node:22-alpine AS distribution
 
 # the id/name of the app to use for
 # the production image creation
@@ -165,7 +165,7 @@ RUN curl --version
 
 # TODO: remove once the CLI has been completely migrated
 # It's used for serverless / lambda containers
-FROM public.ecr.aws/lambda/nodejs:14 AS production
+FROM public.ecr.aws/lambda/nodejs:22 AS production
 
 RUN curl -O https://lambda-insights-extension.s3-ap-northeast-1.amazonaws.com/amazon_linux/lambda-insights-extension.rpm && \
     rpm -U lambda-insights-extension.rpm && \

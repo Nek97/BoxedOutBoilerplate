@@ -22,7 +22,7 @@ jobs:
         id: setup
         with:
           npm_version: 8
-          node_version: 16
+          NODE_VERSION: 22
         uses: bitvavo/gh-actions-collection/extra-info@master
 
       - name: Opening pull request
