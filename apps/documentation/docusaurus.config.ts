@@ -84,7 +84,15 @@ const config: Config = {
     [
       'docusaurus-plugin-typedoc',
       {
-        entryPoints: ['../../libs/boxedout-libs/modern-infra/src/index.ts'],
+        entryPoints: [
+          '../../apps/cli/src/main.ts',
+          '../../apps/kafka-app/src/main.ts',
+          '../../apps/manage-panel/src/main.ts',
+          '../../apps/skeleton-app/src/main.ts',
+          '../../apps/user-provider/src/main.ts',
+          '../../libs/boxedout-libs/modern-infra/src/index.ts',
+          '../../libs/boxedout-libs/universal-data-mapper/src/index.ts'
+        ],
         tsconfig: './tsconfig.typedoc.json',
         out: 'docs/api-docs',
         skipErrorChecking: true,
