@@ -26,3 +26,5 @@ full-backup.sql
 shared-functions
 
 .idea
+coverage/
+dist/
