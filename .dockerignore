@@ -1,0 +1,8 @@
+env
+node_modules
+Dockerfile
+.dockerignore
+Dockerfile
+**/.git
+**/.DS_Store
+**/node_modules

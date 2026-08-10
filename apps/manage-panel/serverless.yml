@@ -1,0 +1,63 @@
+service: boxedout-core-manage-panel
+variablesResolutionMode: 20210326
+provider:
+  name: aws
+  lambdaHashingVersion: 20201221 # https://www.serverless.com/framework/docs/deprecations/#LAMBDA_HASHING_VERSION_V2
+  stage: connect-v3
+  region: ${file(data/serverless.${env:STAGE}.yml):region}
+  memorySize: ${file(data/serverless.${env:STAGE}.yml):memorySize}
+  timeout: ${file(data/serverless.${env:STAGE}.yml):timeout}
+  environment: ${file(data/serverless.${env:STAGE}.yml):environmentVariables}
+  vpc:
+    securityGroupIds: ${file(data/serverless.${env:STAGE}.yml):securityGroupIds}
+    subnetIds: ${file(data/serverless.${env:STAGE}.yml):subnetIds}
+  role: ${file(data/serverless.${env:STAGE}.yml):role}
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - 'lambda:InvokeFunction'
+      Resource: '*'
+  apiName: /connect-v3
+
+custom:
+  accountId: ${file(data/serverless.${env:STAGE}.yml):accountId}
+  warmup: ${file(data/serverless.${env:STAGE}.yml):warmup}
+
+plugins:
+  - serverless-plugin-warmup
+
+package:
+  excludeDevDependencies: true
+  exclude:
+    - ./**
+  include:
+    - ./.warmup/default/**
+    - ./node_modules/**
+    - ../../env/dist/apps/manage-panel/bundle/index.js
+    - ../../env/dist/apps/manage-panel/bundle/index.js.cache
+    - ../../env/dist/apps/manage-panel/bundle/index.js.cache.js
+    #- ../../env/dist/apps/manage-panel/bundle/index.js.map
+    #- ../../env/dist/apps/manage-panel/bundle/sourcemap-register.js
+
+functions:
+  index:
+    warmup:
+      default:
+        enabled: true
+    runtime: nodejs14.x
+    handler: env/dist/apps/manage-panel/bundle/index.lambdaServerHandler
+    events:
+      - http:
+          cors: true
+          path: '/'
+          method: any
+      - http:
+          cors: true
+          path: '/graphql'
+          method: any
+      - http:
+          cors: true
+          path: '{proxy+}'
+          method: any
+    # provisionedConcurrency: 1
+    timeout: 30

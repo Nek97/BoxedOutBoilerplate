@@ -1,0 +1,22 @@
+{
+  "name": "@boxedout-apps/manage-panel",
+  "version": "0.0.3",
+  "description": "BoxedOut Manage Panel API",
+  "author": "BoxedOut",
+  "private": true,
+  "scripts": {
+    "sls:lambda:index": "./node_modules/.bin/serverless invoke local -c serverless.offline.yml --function index --path 'data/sls-offline.test.json'",
+    "sls:package": "./node_modules/.bin/serverless package",
+    "sls:deploy": "npm run sls:install:deps && ./node_modules/.bin/serverless deploy",
+    "sls:offline": "./node_modules/.bin/serverless offline -c serverless.offline.yml",
+    "sls:install:deps": "npm --include=dev --prefix . install"
+  },
+  "dependencies": {
+    "microtime": "3.0.0",
+    "mysql2-import": "^5.0.21"
+  },
+  "devDependencies": {
+    "serverless": "^2.64.1",
+    "serverless-plugin-warmup": "^6.0.0"
+  }
+}

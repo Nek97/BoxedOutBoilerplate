@@ -1,0 +1,26 @@
+name: 'bitvavo-actions'
+description: 'Preparation actions for Bitvavo CI/CD workflow'
+outputs:
+  project_id:
+    description: 'The project identifier alias'
+  github_stage:
+    description: 'Github stage based on branch'
+  github_branch:
+    description: 'Github branch name in lowercase'
+  github_branch_id:
+    description: 'Task ID in lowercase'
+inputs:
+  run-install:
+    description: 'Run installation actions'
+    required: false
+    default: false
+  project-id:
+    description: 'Set the project id'
+    required: false
+  aws-setup:
+    description: 'Setup AWS environment'
+    required: false
+    default: true
+runs:
+  using: 'node12'
+  main: index.js

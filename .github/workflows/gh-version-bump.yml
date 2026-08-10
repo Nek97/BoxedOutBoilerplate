@@ -1,0 +1,24 @@
+name: Github Version bump
+on:
+  pull_request:
+    types:
+      - labeled
+    branches-ignore:
+      - 'master' # PRs that target master do not execute the action automatically
+
+env:
+  NODE_VERSION: 16
+  RC_VERSION: 1
+jobs:
+  version-bump:
+    if: github.event.label.name == 'pr-version-bump'
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Bump version and changelog
+        uses: bitvavo/action-package-version-bump@main
+        with:
+          user_name: 'bitvavo-bot'
+          user_email: 'git-bot@bitvavo.com'
+          ref_branch: 'dev'
+          version_args: 'prerelease --preid=rc${{ env.RC_VERSION }}'
+          node_version: ${{ env.NODE_VERSION }}

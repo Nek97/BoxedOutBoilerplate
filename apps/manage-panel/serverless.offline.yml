@@ -1,0 +1,46 @@
+#
+# this file is used to test our lambda function offline (locally or within the pipeline)
+#
+service: boxedout-core-manage-panel-offline
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+provider:
+  name: aws
+  environment:
+    NODE_ENV: 'production'
+    SLS_OFFLINE: true
+  lambdaHashingVersion: 20201221 # https://www.serverless.com/framework/docs/deprecations/#LAMBDA_HASHING_VERSION_V2
+  apiGateway:
+    shouldStartNameWithService: true # https://www.serverless.com/framework/docs/deprecations/#AWS_API_GATEWAY_NAME_STARTING_WITH_SERVICE
+
+custom:
+  dotenv:
+    # default: project root
+    path: ../../.env
+  serverless-offline:
+    noPrependStageInUrl: true
+    httpPort: 3001
+    host: '0.0.0.0'
+    allowCache: true # needed for graphql
+
+functions:
+  index:
+    runtime: nodejs12.x
+    handler: ../../env/dist/apps/manage-panel/bundle/index.lambdaServerHandler
+    timeout: 30
+    events:
+      - http:
+          cors: true
+          path: '/'
+          method: any
+      - http:
+          cors: true
+          path: '/graphql'
+          method: any
+      - http:
+          cors: true
+          path: '{proxy+}'
+          method: any

@@ -1,0 +1,243 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "target": "es2017",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "outDir": "./env/dist",
+    "rootDir": ".",
+    "baseUrl": "./",
+    "paths": {
+      "@boxedout-app/cli/*": [
+        "apps/cli/src/*"
+      ],
+      "@boxedout-app/all/*": [
+        "apps/all/src/*"
+      ],
+      "@boxedout-app/gateway/*": [
+        "apps/gateway/src/*"
+      ],
+      "@boxedout-app/gateway": [
+        "apps/gateway/src"
+      ],
+      "@boxedout-app/user-provider/*": [
+        "apps/user-provider/src/*"
+      ],
+      "@boxedout-app/user-provider": [
+        "apps/user-provider/src"
+      ],
+      "@boxedout-app/manage-panel/*": [
+        "apps/manage-panel/src/*"
+      ],
+      "@boxedout-app/manage-panel": [
+        "apps/manage-panel/src"
+      ],
+      "@boxedout-app/kafka-app": [
+        "apps/kafka-app/src"
+      ],
+      "@boxedout-app/kafka-app/*": [
+        "apps/kafka-app/src/*"
+      ],
+      "@boxedout-libs/db-boxedout": [
+        "libs/boxedout-libs/db-boxedout/src"
+      ],
+      "@boxedout-libs/db-boxedout/*": [
+        "libs/boxedout-libs/db-boxedout/src/*"
+      ],
+      "@boxedout-libs/db-boxedoutAdmin": [
+        "libs/boxedout-libs/db-boxedoutAdmin/src"
+      ],
+      "@boxedout-libs/db-boxedoutAdmin/*": [
+        "libs/boxedout-libs/db-boxedoutAdmin/src/*"
+      ],
+      "@boxedout/manage-user": [
+        "libs/boxedout/manage-user/src"
+      ],
+      "@boxedout/manage-user/*": [
+        "libs/boxedout/manage-user/src/*"
+      ],
+      "@boxedout/skeleton-boxedout-module": [
+        "libs/boxedout/skeleton-boxedout-module/src"
+      ],
+      "@boxedout/skeleton-boxedout-module/*": [
+        "libs/boxedout/skeleton-boxedout-module/src/*"
+      ],
+      "@boxedout/auth": [
+        "libs/boxedout/auth/src"
+      ],
+      "@boxedout/auth/*": [
+        "libs/boxedout/auth/src/*"
+      ],
+      "@boxedout-libs/errors": [
+        "libs/boxedout-libs/errors/src"
+      ],
+      "@boxedout-libs/errors/*": [
+        "libs/boxedout-libs/errors/src/*"
+      ],
+      "@boxedout-libs/shared/*": [
+        "libs/boxedout-libs/shared/src/*"
+      ],
+      "@boxedout/kafka-user": [
+        "libs/boxedout/kafka-user/src"
+      ],
+      "@boxedout/kafka-user/*": [
+        "libs/boxedout/kafka-user/src/*"
+      ],
+      "@boxedout-libs/redis": [
+        "libs/boxedout-libs/redis/src"
+      ],
+      "@boxedout-libs/redis/*": [
+        "libs/boxedout-libs/redis/src/*"
+      ],
+      "@boxedout-libs/sentry": [
+        "libs/boxedout-libs/sentry/src"
+      ],
+      "@boxedout-libs/sentry/*": [
+        "libs/boxedout-libs/sentry/src/*"
+      ],
+      "@boxedout-libs/modern-infra": [
+        "libs/boxedout-libs/modern-infra/src"
+      ],
+      "@boxedout-libs/modern-infra/*": [
+        "libs/boxedout-libs/modern-infra/src/*"
+      ],
+      "@boxedout-libs/identity-manager-client": [
+        "libs/boxedout-libs/identity-manager-client/src"
+      ],
+      "@boxedout-libs/identity-manager-client/*": [
+        "libs/boxedout-libs/identity-manager-client/src/*"
+      ],
+      "@boxedout-libs/universal-data-mapper": [
+        "libs/boxedout-libs/universal-data-mapper/src"
+      ],
+      "@boxedout-libs/universal-data-mapper/*": [
+        "libs/boxedout-libs/universal-data-mapper/src/*"
+      ],
+      "@boxedout/user": [
+        "libs/boxedout/user/src"
+      ],
+      "@boxedout/user/*": [
+        "libs/boxedout/user/src/*"
+      ],
+      "@boxedout-libs/types-boxedout": [
+        "libs/boxedout-libs/types-boxedout/src"
+      ],
+      "@boxedout-libs/types-boxedout/*": [
+        "libs/boxedout-libs/types-boxedout/src/*"
+      ],
+      "@nestjs-yalc/database": [
+        "libs/common/database/src"
+      ],
+      "@nestjs-yalc/database/*": [
+        "libs/common/database/src/*"
+      ],
+      "@nestjs-yalc/ag-grid": [
+        "libs/common/ag-grid/src"
+      ],
+      "@nestjs-yalc/ag-grid/*": [
+        "libs/common/ag-grid/src/*"
+      ],
+      "@nestjs-yalc/aws-helpers": [
+        "libs/common/aws-helpers/src"
+      ],
+      "@nestjs-yalc/aws-helpers/*": [
+        "libs/common/aws-helpers/src/*"
+      ],
+      "@nestjs-yalc/data-loader": [
+        "libs/common/data-loader/src"
+      ],
+      "@nestjs-yalc/data-loader/*": [
+        "libs/common/data-loader/src/*"
+      ],
+      "@nestjs-yalc/field-middleware": [
+        "libs/common/field-middleware/src"
+      ],
+      "@nestjs-yalc/field-middleware/*": [
+        "libs/common/field-middleware/src/*"
+      ],
+      "@nestjs-yalc/graphql": [
+        "libs/common/graphql/src"
+      ],
+      "@nestjs-yalc/graphql/*": [
+        "libs/common/graphql/src/*"
+      ],
+      "@nestjs-yalc/graphql-relay": [
+        "libs/common/graphql-relay/src"
+      ],
+      "@nestjs-yalc/graphql-relay/*": [
+        "libs/common/graphql-relay/src/*"
+      ],
+      "@nestjs-yalc/interfaces": [
+        "libs/common/interfaces/src"
+      ],
+      "@nestjs-yalc/interfaces/*": [
+        "libs/common/interfaces/src/*"
+      ],
+      "@nestjs-yalc/logger": [
+        "libs/common/logger/src"
+      ],
+      "@nestjs-yalc/logger/*": [
+        "libs/common/logger/src/*"
+      ],
+      "@nestjs-yalc/utils": [
+        "libs/common/utils/src"
+      ],
+      "@nestjs-yalc/utils/*": [
+        "libs/common/utils/src/*"
+      ],
+      "@nestjs-yalc/jest": [
+        "libs/common/jest/src"
+      ],
+      "@nestjs-yalc/jest/*": [
+        "libs/common/jest/src/*"
+      ],
+      "@nestjs-yalc/types": [
+        "libs/common/types/src"
+      ],
+      "@nestjs-yalc/types/*": [
+        "libs/common/types/src/*"
+      ],
+      "@nestjs-yalc/kafka": [
+        "libs/common/kafka/src"
+      ],
+      "@nestjs-yalc/kafka/*": [
+        "libs/common/kafka/src/*"
+      ],
+      "@nestjs-yalc/skeleton-module": [
+        "libs/common/skeleton-module/src"
+      ],
+      "@nestjs-yalc/skeleton-module/*": [
+        "libs/common/skeleton-module/src/*"
+      ]
+    }
+  },
+  "include": [
+    "apps/**/*.ts",
+    "libs/**/src/**/*.ts",
+    "apps/**/*.js",
+    "libs/**/src/**/*.js"
+  ],
+  "exclude": [
+    "env",
+    "docs",
+    "var",
+    "**/node_modules",
+    "**/.webpack"
+  ],
+  "ts-node": {
+    "transpileOnly": true,
+    "files": true
+  }
+}

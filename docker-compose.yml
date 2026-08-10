@@ -1,0 +1,167 @@
+version: '3.7'
+
+#
+# This is a partial docker-compose file that is automatically
+# merged together with the boxedout-docker-platform one.
+#
+
+services:
+  # reset profiles for server dependencies
+  # they must be run by default
+  boxed-out-boilerplate:
+    extends:
+      file: utils/boxedout-docker-platform/docker-compose.yml
+      service: boxed-out-boilerplate
+    #
+    # generic confs
+    #
+    command: npm run start:dev
+    volumes:
+      # folders of the parent directories must be available for the
+      # creation of symlinks
+      - ../:/opt/deps:delegated
+      # generic path for current project
+      - ./:/opt/application:delegated
+      # restore container node_modules
+      # and avoid to sync the host node_modules with the container
+      - /opt/application/node_modules
+      # performance fix on non-linux OS
+      - server-doc:/opt/application/docs/compodoc
+      - server-env:/opt/application/env
+      - server-tmp:/tmp
+      - server-home:/home/node
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-""}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-""}
+      - TYPEORM_CREATE_DB=0
+    working_dir: /opt/application
+    depends_on:
+      - mysql-test
+
+  mysql-test:
+    image: ghcr.io/boxedout/mysql:5.7-latest
+    command: --max_allowed_packet=1073741824 --datadir "/var/lib/mysql-no-volume" --max_connections=10000 --sql_mode=""
+    env_file:
+      - ./utils/boxedout-docker-platform/conf/dist/.env.docker
+    environment:
+      - MYSQL_ROOT_HOST=%
+    ports:
+      - '127.0.0.1:${DOCKER_PORT_MYSQL_TEST:-60006}:3306'
+    networks:
+      local-private-net:
+    expose:
+      - 3306
+    volumes:
+      - ./utils/boxedout-docker-platform/data/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  mysql:
+    extends:
+      file: utils/boxedout-docker-platform/docker-compose.yml
+      service: mysql
+
+  frontend-manage-panel-next:
+    extends:
+      file: utils/boxedout-docker-platform/docker-compose.yml
+      service: frontend-manage-panel-next
+    profiles:
+      - extra
+
+  phpmyadmin:
+    extends:
+      file: utils/boxedout-docker-platform/docker-compose.yml
+      service: phpmyadmin
+    profiles:
+      - extra
+
+  # localstack:
+  #   extends:
+  #     file: utils/boxedout-docker-platform/docker-compose.yml
+  #     service: localstack
+  #   profiles:
+  #     - extra
+
+  redis:
+    extends:
+      file: utils/boxedout-docker-platform/docker-compose.yml
+      service: redis
+
+  backend-manage:
+    extends:
+      file: utils/boxedout-docker-platform/docker-compose.yml
+      service: backend-manage
+    profiles:
+      - extra
+
+  ## KAFKA-SERVICES
+  zookeeper:
+    extends:
+      file: utils/boxedout-docker-platform/docker-compose.yml
+      service: zookeeper
+    profiles:
+      - kafka-service
+
+  kafka:
+    extends:
+      file: utils/boxedout-docker-platform/docker-compose.yml
+      service: kafka
+    depends_on:
+      zookeeper:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    profiles:
+      - kafka-service
+
+  schema-registry:
+    extends:
+      file: utils/boxedout-docker-platform/docker-compose.yml
+      service: schema-registry
+    depends_on:
+      kafka:
+        condition: service_healthy
+    profiles:
+      - kafka-service
+
+  kowl:
+    extends:
+      file: utils/boxedout-docker-platform/docker-compose.yml
+      service: kowl
+    profiles:
+      - kafka-service
+    depends_on:
+      schema-registry:
+        condition: service_healthy
+
+  connect:
+    extends:
+      file: utils/boxedout-docker-platform/docker-compose.yml
+      service: connect
+    depends_on:
+      schema-registry:
+        condition: service_healthy
+    profiles:
+      - kafka-service
+
+volumes:
+  extends:
+
+  server-tmp:
+  server-env:
+  server-doc:
+  server-home:
+  server-src:
+  # volumes from utils/boxedout-focker-platform
+  mysql-data:
+  mysql-replica-data:
+  zookeeper_data:
+  kafka_data:
+  redis-data:
+    driver: local
+
+networks:
+  local-shared-net:
+    name: local-shared-net
+    external: true
+  local-private-net:
+    driver: bridge

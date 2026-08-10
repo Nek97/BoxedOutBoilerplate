@@ -1,0 +1,18 @@
+{
+  "name": "@boxedout-apps/cli",
+  "version": "1.2.0",
+  "description": "BoxedOut CLI",
+  "author": "BoxedOut",
+  "private": true,
+  "dependencies": {
+    "mysql2-import": "^5.0.21"
+  },
+  "scripts": {
+    "build:webpack": "npx nest build --webpack webpack.config.js",
+    "sls:lambda:reinit": "npx --yes serverless@^2.64.1 invoke local -c serverless.offline.yml --function reinit",
+    "sls:lambda:migrate": "npx --yes serverless@^2.64.1 invoke local -c serverless.offline.yml --function migrate",
+    "sls:lambda:reseed": "npx --yes serverless@^2.64.1 invoke local -c serverless.offline.yml --function seed --data '{\"reseed\":true}'",
+    "sls:package": "npx --yes serverless@^2.64.1 package",
+    "sls:deploy": "npx --yes serverless@^2.64.1 deploy"
+  }
+}

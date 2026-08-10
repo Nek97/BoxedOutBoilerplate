@@ -1,0 +1,7 @@
+[submodule "libs/common"]
+	path = libs/common
+	url = https://github.com/Nek97/nestjs-yalc.git
+	branch = master
+[submodule "utils/boxedout-docker-platform"]
+	path = utils/boxedout-docker-platform
+	url = https://github.com/boxedout/boxedout-docker-platform

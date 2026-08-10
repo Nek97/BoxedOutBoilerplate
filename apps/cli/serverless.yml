@@ -1,0 +1,67 @@
+service: boxedout-core-cli
+variablesResolutionMode: 20210326
+provider:
+  name: aws
+  lambdaHashingVersion: 20201221 # https://www.serverless.com/framework/docs/deprecations/#LAMBDA_HASHING_VERSION_V2
+  stage: ${env:STAGE}
+  region: ${file(data/serverless.${env:STAGE}.yml):region}
+  memorySize: ${file(data/serverless.${env:STAGE}.yml):memorySize}
+  timeout: ${file(data/serverless.${env:STAGE}.yml):timeout}
+  environment: ${file(data/serverless.${env:STAGE}.yml):environmentVariables}
+  vpc:
+    securityGroupIds: ${file(data/serverless.${env:STAGE}.yml):securityGroupIds}
+    subnetIds: ${file(data/serverless.${env:STAGE}.yml):subnetIds}
+  role: ${file(data/serverless.${env:STAGE}.yml):role}
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - 'lambda:InvokeFunction'
+      Resource: '*'
+  ecr:
+    # In this section you can define images that will be built locally and uploaded to ECR
+    images:
+      appimage:
+        uri: ${self:custom.accountId}.dkr.ecr.${self:provider.region}.amazonaws.com/boxed-out-boilerplate@${env:DIGEST, 'cli-latest'}
+
+custom:
+  accountId: ${file(data/serverless.${env:STAGE}.yml):accountId}
+  #
+  # Using YAML merge key operator to create different configuration
+  # for the functions. The goal is to not deploy functions used for dev-only
+  # into the production stage
+  #
+  _default_functions: &_default_functions
+    migrate:
+      image:
+        name: appimage
+        command: 'env/dist/apps/cli/src/main.runMigrations'
+        entryPoint:
+          - '/lambda-entrypoint.sh'
+      timeout: 900
+
+  _dev_functions: &_dev_functions
+    <<: *_default_functions
+    reinit:
+      image:
+        name: appimage
+        command: 'env/dist/apps/cli/src/main.runReinit'
+        entryPoint:
+          - '/lambda-entrypoint.sh'
+      timeout: 900
+    seed:
+      image:
+        name: appimage
+        command: 'env/dist/apps/cli/src/main.runSeeds'
+        entryPoint:
+          - '/lambda-entrypoint.sh'
+      timeout: 900
+  dev_functions:
+    <<: *_dev_functions
+
+  qa_functions:
+    <<: *_dev_functions
+
+  prod_functions:
+    <<: *_default_functions
+
+functions: ${self:custom.${env:STAGE}_functions}

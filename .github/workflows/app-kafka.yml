@@ -1,0 +1,341 @@
+name: App kafka-app Pipeline
+on:
+  workflow_dispatch:
+    inputs:
+      skipchecks:
+        description: 'Skip check jobs.'
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches:
+      - master
+      - rc
+      - dev
+    paths:
+      - '.github/actions/**'
+      - '.github/workflows/app-kafka.yml'
+      - 'apps/kafka-app/**'
+      - 'libs/bitvavo-libs/**'
+      - 'libs/bitvavo/kafka-crypto/**'
+      - 'libs/common/**'
+      - 'test/**'
+      - 'conf/**'
+      # execute when root level files change
+      - '*'
+  pull_request:
+    branches-ignore:
+      - 'master' # PRs that target master do not execute the action automatically
+    paths:
+      - '.github/actions/**'
+      - '.github/workflows/app-kafka.yml'
+      - 'apps/kafka-app/**'
+      - 'libs/bitvavo-libs/**'
+      - 'libs/bitvavo/kafka-crypto/**'
+      - 'libs/common/**'
+      - 'test/**'
+      - 'conf/**'
+      # execute when root level files change
+      - '*'
+
+env:
+  PROJECT_ID: kafka-app
+  NODE_VERSION: 16
+  # AWS DEV SECRETS
+  AWS_SECRET_DEV_KEY_ID: ${{ secrets.AWS_DEV_ACCESS_KEY_ID }}
+  AWS_SECRET_DEV_KEY: ${{ secrets.AWS_DEV_ACCESS_KEY }}
+  AWS_ACCOUNT_DEV_ID: ${{ secrets.AWS_DEV_ACCOUNT_ID }}
+  # AWS RC SECRETS
+  AWS_SECRET_QA_KEY_ID: ${{ secrets.AWS_RC_ACCESS_KEY_ID }}
+  AWS_SECRET_QA_KEY: ${{ secrets.AWS_RC_ACCESS_KEY }}
+  AWS_ACCOUNT_QA_ID: ${{ secrets.AWS_RC_ACCOUNT_ID }}
+  # AWS PROD SECRETS
+  AWS_SECRET_PROD_KEY_ID: ${{ secrets.AWS_PROD_ACCESS_KEY_ID }}
+  AWS_SECRET_PROD_KEY: ${{ secrets.AWS_PROD_ACCESS_KEY }}
+  AWS_ACCOUNT_PROD_ID: ${{ secrets.AWS_PROD_ACCOUNT_ID }}
+  # other
+  GITHUB_TOKEN: ${{ secrets.READ_PACKAGE_TOKEN }}
+  NODE_ENV: 'pipeline'
+jobs:
+  #===========================
+  #
+  #  PREPARE PIPELINE
+  #
+  #============================
+  prepare-pipeline:
+    name: Prepare Pipeline
+    runs-on: ubuntu-latest
+    outputs:
+      github_stage: ${{ steps.bitvavo.outputs.github_stage }}
+      project_id: ${{ steps.bitvavo.outputs.project_id }}
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Cache global npm
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-${{ env.PROJECT_ID }}-global-node-modules
+        with:
+          # npm cache files are stored in `~/.npm` on Linux/macOS
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Cache local node_modules
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-${{ env.PROJECT_ID }}-modules
+        with:
+          path: 'node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+      - name: Run Bitvavo actions
+        id: bitvavo
+        with:
+          run-install: true
+          project-id: ${{ env.PROJECT_ID }}
+        uses: ./.github/actions/bitvavo-actions
+      # to make sure that the bitvavo actions worked
+      - name: Check npm version
+        run: npm --version
+
+  #===========================
+  #
+  #  RUN PARALLEL JOBS
+  #
+  #============================
+  linter:
+    if: github.event.inputs.skipchecks != 'true'
+    name: Linter Checks
+    needs: prepare-pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Restore node_modules cache
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-${{ env.PROJECT_ID }}-modules
+        with:
+          path: 'node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+      - name: Run Bitvavo actions
+        id: bitvavo
+        with:
+          project-id: ${{ env.PROJECT_ID }}
+        uses: ./.github/actions/bitvavo-actions
+      - name: Lint check
+        run: npm run lint:path --lintpath=apps/${{ env.PROJECT_ID }};
+
+  test-unit:
+    if: github.event.inputs.skipchecks != 'true'
+    name: Unit Tests
+    needs: prepare-pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Restore node_modules cache
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-${{ env.PROJECT_ID }}-modules
+        with:
+          path: 'node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+      - name: Run Bitvavo actions
+        id: bitvavo
+        with:
+          project-id: ${{ env.PROJECT_ID }}
+        uses: ./.github/actions/bitvavo-actions
+      - name: Test coverage
+        run: npm run test:cov -- --ci apps/${{ env.PROJECT_ID }};
+      - name: Upload coverage artifacts
+        if: steps.bitvavo.outputs.github_stage != 'other' # deploy only for dev, qa and prod
+        uses: actions/upload-artifact@master
+        with:
+          name: apps-${{ env.PROJECT_ID }}
+          path: docs/compodoc/jestcoverage/apps/${{ env.PROJECT_ID }}
+          retention-days: 80
+
+  dry-runs:
+    if: github.event.inputs.skipchecks != 'true'
+    name: Dry runs
+    needs: prepare-pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Restore node_modules cache
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-${{ env.PROJECT_ID }}-modules
+        with:
+          path: 'node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+      - name: Run Bitvavo actions
+        id: bitvavo
+        with:
+          project-id: ${{ env.PROJECT_ID }}
+        uses: ./.github/actions/bitvavo-actions
+      - name: Build
+        run: |
+          npm run build
+      - name: Install compose on ubuntu
+        run: |
+          mkdir -p ~/.docker/cli-plugins/
+          curl -SL https://github.com/docker/compose/releases/download/v2.2.2/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+          chmod +x ~/.docker/cli-plugins/docker-compose
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Init Docker compose
+        env:
+          MYSQL_HOST: '127.0.0.1'
+          MYSQL_USER: 'root'
+          MYSQL_ROOT_PASSWORD: 'xs2mysql'
+          MYSQL_PORT: 60003
+        run: |
+          docker compose version
+          docker network create local-shared-net
+          npm run docker:set:proj ${{ env.PROJECT_ID }}
+          docker compose up -d schema-registry
+          bash utils/wait-for-service.sh schema-registry
+        # npm run typeorm:initdb
+      - name: Dry runs
+        env:
+          MYSQL_HOST: '127.0.0.1'
+          MYSQL_USER: 'root'
+          MYSQL_ROOT_PASSWORD: 'xs2mysql'
+          MYSQL_PORT: 60003
+          KAFKA_HOST: 'localhost:9093'
+          KAFKA_AUTH_ENABLED: false
+          SCHEMA_REGISTRY: 'http://localhost:8081'
+          SCHEMA_REGISTRY_AUTH_ENABLED: false
+        run: |
+          APP_DRY_RUN=1 APP_DRY_RUN_NO_DB=1 npm run start:prod;
+
+  image-creation:
+    env:
+      DOCKER_BUILDKIT: 1
+    name: Image creation
+    needs: prepare-pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Run Bitvavo actions
+        id: bitvavo
+        with:
+          project-id: ${{ env.PROJECT_ID }}
+        uses: ./.github/actions/bitvavo-actions
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Pull image for cache
+        env:
+          IMAGE_TAG: ${{ env.PROJECT_ID }}-latest
+        run: docker pull ghcr.io/bitvavo/backend-core-api/${{ env.PROJECT_ID }}:dev-latest|| true
+      - name: Build image for Github
+        env:
+          IMAGE_TAG_VERSION: ${{ env.CORE_API_VERSION}}
+          IMAGE_TAG_LATEST: ${{ steps.bitvavo.outputs.github_branch_id }}-latest
+        run: |
+          docker build \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --build-arg DOCKER_ENV=${{ env.DOCKER_ENV}} \
+            --build-arg GITHUB_TOKEN=${{ secrets.PUBLISH_TOKEN }} \
+            --build-arg APP_ID=${{ env.PROJECT_ID }} \
+            --cache-from=ghcr.io/bitvavo/backend-core-api/${{ env.PROJECT_ID }}:dev-latest \
+            --target distribution \
+            -t ghcr.io/bitvavo/backend-core-api/${{ env.PROJECT_ID }}:${{ env.IMAGE_TAG_LATEST }} \
+            -t ghcr.io/bitvavo/backend-core-api/${{ env.PROJECT_ID }}:${{ env.IMAGE_TAG_VERSION }} .
+      - name: Deploy image to Github
+        env:
+          IMAGE_TAG: ${{ env.PROJECT_ID }}-latest
+        if: steps.bitvavo.outputs.github_stage != 'other' # deploy only for dev, qa and prod
+        run: |
+          docker push --all-tags ghcr.io/bitvavo/backend-core-api/${{ env.PROJECT_ID }}
+
+  #===========================
+  #
+  #  DEPLOY STAGE
+  #
+  #============================
+  k8s-deploy:
+    name: Deploy app on k8s
+    needs: [prepare-pipeline, test-unit, linter, dry-runs, image-creation]
+    concurrency: ci-${{ github.workflow }}-deploy-${{ github.ref }}
+    # deploy only for dev, qa and prod
+    # verbose condition needed because of this limitation: https://github.com/actions/runner/issues/491#issuecomment-850884422
+    # also, the wildcard can't work in this case because we can have 1 on success and the other on skipped
+    if: |
+      always() &&
+      (needs.prepare-pipeline.result == 'success') &&
+      (needs.test-unit.result == 'success' || needs.test-unit.result == 'skipped') &&
+      (needs.linter.result == 'success' || needs.linter.result == 'skipped') &&
+      (needs.dry-runs.result == 'success' || needs.dry-runs.result == 'skipped') &&
+      (needs.image-creation.result == 'success' || needs.image-creation.result == 'skipped') &&
+      contains('
+        refs/heads/dev
+        refs/heads/master
+        refs/heads/rc
+        ', github.ref)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Deploy on k8s - user
+        with:
+          yml_filename: kafka-user
+          k8s_config_token: ${{ secrets.K8S_CONFIG_TOKEN }}
+        uses: ./.github/actions/bitvavo-actions/k8s-deploy
+      - name: Deploy on k8s - crypto
+        with:
+          yml_filename: kafka-crypto
+          k8s_config_token: ${{ secrets.K8S_CONFIG_TOKEN }}
+        uses: ./.github/actions/bitvavo-actions/k8s-deploy

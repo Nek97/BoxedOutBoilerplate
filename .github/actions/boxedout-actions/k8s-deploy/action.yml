@@ -1,0 +1,76 @@
+name: 'action-k8s-deploy'
+description: 'Action to update the image tag of the k8s-config to trigger the deployment'
+outputs:
+  github_stage:
+    description: 'Github stage'
+    value: ${{ steps.bitvavo.outputs.github_stage }}
+  github_branch:
+    description: 'Github branch name'
+    value: ${{ steps.setup.outputs.github_branch }}
+  package_version:
+    description: 'The package version of the repository. PACKAGE_VERSION env variable is also exported.'
+    value: ${{ steps.setup.outputs.package_version }}
+inputs:
+  tag_path:
+    description: 'yq compatible XML path of the tag property'
+    required: false
+    default: '.deployment.image.tag'
+  k8s_config_token:
+    description: 'Github token to commit on k8s-config repo'
+    required: false
+  yml_filename:
+    description: 'Set the name of the yml to change (without the extension). It uses the value of env.PROJECT_ID by default'
+    required: false
+  push_commit:
+    description: 'Create a git commit and push'
+    required: false
+    default: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup
+      id: setup
+      with:
+        npm_version: ${{ env.NPM_VERSION }}
+        node_version: ${{ env.NODE_VERSION }}
+      uses: bitvavo/gh-actions-collection/extra-info@master
+
+    - name: Run Bitvavo actions
+      id: bitvavo
+      with:
+        project-id: ${{ env.PROJECT_ID }}
+        aws-setup: false
+      uses: ./.github/actions/bitvavo-actions
+
+    - name: Checkout k8s-config
+      uses: actions/checkout@v2
+      with:
+        repository: bitvavo/k8s-configs
+        token: ${{ inputs.k8s_config_token }}
+        path: 'k8s-config'
+
+    - name: Update k8s config
+      env:
+        IMAGE_TAG_VERSION: ${{ steps.setup.outputs.package_version }}
+        BRANCH_NAME: ${{ steps.setup.outputs.github_branch }}
+      shell: bash
+      run: |
+        cd k8s-config
+        FOLDER=${{ steps.bitvavo.outputs.github_stage }}
+        export VALUES=$(yq e '.spec.source.helm.values' "$FOLDER/internaltools/${{ inputs.yml_filename || env.PROJECT_ID }}.yaml" | yq e '${{ inputs.tag_path }}="${{ env.IMAGE_TAG_VERSION }}"' -) 
+        [ ! -z "$VALUES" ] && yq e -i '.spec.source.helm.values=strenv(VALUES)'  "$FOLDER/internaltools/${{ inputs.yml_filename || env.PROJECT_ID }}.yaml" || exit 1
+
+    - name: Commit and push
+      if: inputs.push_commit == 'true'
+      env:
+        IMAGE_TAG_VERSION: ${{ steps.setup.outputs.package_version }}
+        BRANCH_NAME: ${{ steps.setup.outputs.github_branch }}
+      shell: bash
+      run: |
+        cd k8s-config
+        FOLDER=${{ steps.bitvavo.outputs.github_stage }}
+        git add "$FOLDER/internaltools/${{ inputs.yml_filename || env.PROJECT_ID }}.yaml"
+        git config --local user.email "devops@github.com"
+        git config --local user.name "${{ github.actor }}"
+        git commit -sm "chore(internaltools/${{ env.PROJECT_ID }}): ${{ env.IMAGE_TAG_VERSION }} from ${{ github.repository }}:${{ env.BRANCH_NAME }}"
+        git push

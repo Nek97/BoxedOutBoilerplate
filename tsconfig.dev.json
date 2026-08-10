@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": false
+  },
+  "include": [
+    "apps/**/*.ts",
+    "libs/**/src/**/*.ts",
+    "apps/**/*.js",
+    "libs/**/src/**/*.js",
+    "test/**/*.ts",
+    "test/jest.js",
+    "jest.config.ts"
+  ],
+  "exclude": [
+    "env",
+    "docs",
+    "var",
+    "**/node_modules",
+    "**/.webpack",
+    "**/database/seeds"
+  ]
+}

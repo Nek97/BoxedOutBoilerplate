@@ -1,0 +1,37 @@
+name: Github Sync branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      dest_branch:
+        description: 'Specify destination branch'
+        required: true
+  push:
+    branches:
+      - dev
+
+jobs:
+  sync-branches:
+    runs-on: ubuntu-latest
+    name: Syncing branches
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup
+        id: setup
+        with:
+          npm_version: 8
+          node_version: 16
+        uses: bitvavo/gh-actions-collection/extra-info@master
+
+      - name: Opening pull request
+        id: pull
+        uses: tretuna/sync-branches@1.4.0
+        with:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          FROM_BRANCH: ${{ steps.setup.outputs.github_branch }}
+          CONTENT_COMPARISON: true
+          TO_BRANCH: ${{ github.event.inputs.dest_branch || 'master' }}
+          PULL_REQUEST_BODY: You need first to approve and then apply the merge-ff label to merge this PR on master. Please refer to this documentation to learn more - https://ideal-guacamole-ec12a77c.pages.github.io/dev/docs/git-workflow-and-versioning.html
+          # PULL_REQUEST_IS_DRAFT: true

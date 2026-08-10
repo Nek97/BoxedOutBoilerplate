@@ -1,0 +1,18 @@
+{
+  "max": "100",
+  "relUser_AdminLog": "20",
+  "relUser_UserPhone": "2",
+  "relUser_UserEmail": "2",
+  "relUser_UserLog": "20",
+  "relUser_Ip": "1",
+  "relUser_UserDevice": "6",
+  "relUser_UserMobileDevice": "6",
+  "relUser_Comment": "20",
+  "relUser_LogAction": "20",
+  "relUser_LogView": "20",
+  "relUser_UserTag": "5",
+  "relUser_Asset": "100",
+  "relUser_Fiat": "100",
+  "relUser_FiuNotification": "20",
+  "relCorporateEntity_CorporatePersonOfInterest": "5"
+}

@@ -1,0 +1,65 @@
+name: Github MYSQL Pipeline
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Specify the tag of the mysql image, e.g: 5.7.x'
+        required: true
+      seed:
+        description: 'Insert amount of users to seed. Leave empty if you do not want to seed the database'
+        required: false
+  workflow_run:
+    workflows: [App CLI Pipeline]
+    types:
+      - completed
+    branches:
+      - 'dev'
+
+env:
+  MYSQL_LATEST_TAG: 5.7-latest
+  MYSQL_LATEST_TAG_SEED: 5.7-latest-seed
+  GITHUB_TOKEN: ${{ secrets.READ_PACKAGE_TOKEN }}
+  MYSQL_IMAGE: ghcr.io/bitvavo/mysql:5.7-no-volumes
+jobs:
+  generate-mysql-image:
+    name: Generate MySQL image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Init docker image
+        run: |
+          docker run --pull always -d --name=mysql --env MYSQL_ROOT_PASSWORD=xs2mysql -p 3306:3306 ${{ env.MYSQL_IMAGE }} \
+              --max-allowed-packet=256M \
+              --datadir=/var/lib/mysql-no-volume \
+              --log-bin=/var/lib/mysql/mysql-bin.log \
+              --server-id=1 \
+              --enforce-gtid-consistency=ON \
+              --gtid-mode=ON \
+              --max_connections=10000 \
+              --sql_mode=
+          sleep 5 # TODO: use healthcheck mechanism
+          docker run --pull always --network host \
+          --env MYSQL_HOST=127.0.0.1 --env MYSQL_PORT=3306 --env MYSQL_ROOT_PASSWORD=xs2mysql --env NODE_ENV=development \
+          --rm ghcr.io/bitvavo/backend-core-api/cli:cli-latest \
+          node main create --withSchema
+      - name: Seed docker image
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.seed }}
+        run: |
+          docker run --pull always --network host \
+          --env MYSQL_HOST=127.0.0.1 --env MYSQL_PORT=3306 --env MYSQL_ROOT_PASSWORD=xs2mysql --env NODE_ENV=development \
+          --rm ghcr.io/bitvavo/backend-core-api/cli:cli-latest \
+          node main seed --reseed --input '{ "max" : ${{ github.event.inputs.seed || 150 }} }'
+      - name: Deploy image
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_run'
+        env:
+          IMAGE_TAG: ${{ github.event_name != 'workflow_dispatch' && env.MYSQL_LATEST_TAG_SEED || github.event.inputs.tag }}
+        run: |
+          docker commit mysql ghcr.io/bitvavo/mysql:${{ env.IMAGE_TAG }}
+          docker commit mysql ghcr.io/bitvavo/mysql:${{ env.MYSQL_LATEST_TAG }}
+          docker push ghcr.io/bitvavo/mysql:${{ env.IMAGE_TAG }}
+          docker push ghcr.io/bitvavo/mysql:${{ env.MYSQL_LATEST_TAG }}

@@ -1,0 +1,32 @@
+{
+  "$schema": "./node_modules/@compodoc/compodoc/src/config/schema.json",
+  "includes": "docs",
+  "includesName": "Documentation",
+  "customLogo": "./docs/assets/boxedout-mark-square-blue2.png",
+  "customFavicon": "./docs/assets/boxedout-mark-square-blue2.png",
+  "watch": true,
+  "output": "docs/compodoc",
+  "tsconfig": "tsconfig.json",
+  "assetsFolder": "docs/assets",
+  "hideGenerator": true,
+  "toggleMenuItems": ["additionalPages"],
+  "disableSearch": true,
+  "navTabConfig": [
+    {
+      "id": "example",
+      "label": "Overview"
+    },
+    {
+      "id": "info",
+      "label": "API"
+    },
+    {
+      "id": "source",
+      "label": "Source"
+    },
+    {
+      "id": "tree",
+      "label": "DOM Tree"
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+name: Github Docker Dev Pipeline
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy docker image.'
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches:
+      - master
+      - rc
+      - dev
+  pull_request:
+    branches-ignore:
+      - 'master' # PRs that target master do not execute the action automatically
+
+env:
+  GITHUB_TOKEN: ${{ secrets.READ_PACKAGE_TOKEN }}
+  NODE_ENV: 'pipeline'
+  NODE_VERSION: 16
+  JWT_SECRET_PVT: 'dummydummy'
+  JWT_SECRET_PUB: 'dummydummy'
+
+jobs:
+  # Test README installation process in order
+  # to avoid regressions
+  test-install:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # MacOSx takes too much to load
+          # TODO: implement a way to run it manually only when needed
+          # - os: macos-latest
+
+          - os: ubuntu-latest
+
+          # TODO: windows not supported yet. Try to implement it or use the WSL2 in the meanwhile
+          # - os: windows-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Run Bitvavo actions
+        id: bitvavo
+        with:
+          aws-setup: false
+        uses: ./.github/actions/bitvavo-actions
+      - uses: docker-practice/actions-setup-docker@master
+      # install docker-compose v2 on ubuntu (https://docs.docker.com/compose/cli-command/)
+      - name: Install compose on ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p ~/.docker/cli-plugins/
+          curl -SL https://github.com/docker/compose/releases/download/v2.2.2/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+          chmod +x ~/.docker/cli-plugins/docker-compose
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Test install
+        run: |
+          docker compose version
+          docker network create local-shared-net
+          npm run docker:initdb
+          npm run docker:reseed
+          npm run docker:set:proj all
+          npm run docker:start:d
+      # TODO: find a better way, it crashes with npm error 137 (RAM issue possibly?)
+      # - name: Run app in dry-run to check if it works
+      #   run: |
+      #     npm run docker:compose -- exec backend-core-api npx cross-env APP_DRY_RUN=1 npm run start
+
+  #===========================
+  #
+  #  DEV DOCKER PIPELINE
+  #
+  #============================
+  dev-image:
+    concurrency:
+      group: ci-docker-${{ github.ref }}
+      cancel-in-progress: true
+    name: Github Docker Image
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+      DOCKER_BUILDKIT: 1
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Run Bitvavo actions
+        id: bitvavo
+        with:
+          aws-setup: false
+        uses: ./.github/actions/bitvavo-actions
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Pull GH image for cache
+        run: docker pull ghcr.io/bitvavo/backend-core-api/node-server:dev-latest || true
+      - name: Build Docker image
+        run: |
+          docker build --target=dev \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --build-arg DOCKER_ENV=development \
+            --build-arg STAGE=dev \
+            --build-arg GITHUB_TOKEN=${{ secrets.PUBLISH_TOKEN }} \
+            --cache-from=ghcr.io/bitvavo/backend-core-api/node-server:dev-latest \
+            -t ghcr.io/bitvavo/backend-core-api/node-server:${{ steps.bitvavo.outputs.github_branch_id }}-latest .
+      - name: Push to GitHub Packages
+        if: ${{ steps.bitvavo.outputs.github_stage != 'other' || github.event.inputs.deploy == 'true' }}
+        run: docker push ghcr.io/bitvavo/backend-core-api/node-server:${{ steps.bitvavo.outputs.github_branch_id }}-latest

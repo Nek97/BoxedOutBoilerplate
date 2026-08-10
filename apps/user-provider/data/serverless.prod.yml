@@ -1,0 +1,51 @@
+# Provider
+timeout: 30
+memorySize: 1024
+role: arn:aws:iam::595223267069:role/ServerlessCoreAPI
+
+# Account specific
+accountId: '595223267069'
+region: 'eu-central-1'
+
+# Resources
+path: connect-v3
+
+subnetIds:
+  - subnet-0f63c6530ba5131fb
+  - subnet-04d1291517ad6454b
+securityGroupIds:
+  - sg-07b31a68343b563af
+
+# Events
+corsLoginRequired:
+  origin: 'https://account.boxedout.com'
+  headers:
+    - Content-Type
+    - X-CSRF-Token
+    - Authorization
+  allowCredentials: true
+
+warmup:
+  default:
+    events:
+      - schedule: 'cron(0/1 * * * ? *)'
+    concurrency: 5
+    prewarm: true
+    cleanFolder: false
+
+# Environment variables
+environmentVariables:
+  AWS_FLAG: 15
+  BASE_PATH: '/connect-v3'
+  NEST_LOGGER: 'pino'
+  TYPEORM_LOGGING: true
+  NODE_ENV: 'production'
+  STAGE: '${env:STAGE}'
+  PATH: 'connect-v3'
+  DOMAIN: 'account.boxedout.com'
+  MYSQL_HOST: ${ssm:DB_BOXEDOUT_PROXY_HOST}
+  MYSQL_USER: ${ssm:DB_CORE_API_USER}
+  MYSQL_TOTAL_REPLICATION_NODES: 1
+  MYSQL_REPLICA_HOST_1: ${ssm:DB_BOXEDOUT_PROXY_HOST_RO}
+  MYSQL_REPLICA_USERNAME_1: ${ssm:DB_CORE_API_USER}
+  AWS_REMOTE_KEYID: ${ssm:CRYPT_REMOTE_KEY}

@@ -1,0 +1,54 @@
+name: Github Merge PR
+on:
+  pull_request:
+    types:
+      - labeled
+
+jobs:
+  fast_forward_job:
+    name: Fast Forward merge
+    if: github.event.label.name == 'merge-ff'
+    runs-on: ubuntu-latest
+    steps:
+      # To use this repository's private action, you must check out the repository
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.YEHONAL_TOKEN }}
+
+      - name: Setup
+        id: setup
+        with:
+          npm_version: 8
+          node_version: 16
+        uses: bitvavo/gh-actions-collection/extra-info@master
+
+      # git reset alternative
+      # TODO: use personal token since the GITHUB_TOKEN doesn't trigger the actions on push
+      #
+      # - name: Merge branches
+      #   run: |
+      #     echo "checkout source"
+      #     git checkout -B ${{ github.event.pull_request.base.ref }} origin/${{ github.event.pull_request.base.ref }}
+      #     echo "reset on target"
+      #     git reset --hard origin/${{ steps.setup.outputs.github_branch }}
+      #     echo "push changes if possible"
+      #     git push origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Merge
+        ## We should restore the original action
+        ## when this https://github.com/robotology/gh-action-nightly-merge/pull/13 is merged
+        uses: usertesting/gh-action-nightly-merge@1dfe8207eac17d7cd927277d4d91d0e35900baf1
+        with:
+          # we use this action where the stable_branch is the source (in our case dev)
+          # and development_branch is the target (in our case master)
+          stable_branch: ${{ steps.setup.outputs.github_branch }}
+          development_branch: ${{ github.event.pull_request.base.ref }}
+          allow_ff: true
+          ff_only: true
+          allow_forks: true
+          push_token: 'PUSH_TOKEN'
+        env:
+          GITHUB_TOKEN: ${{ secrets.YEHONAL_TOKEN }}
+          PUSH_TOKEN: ${{ secrets.YEHONAL_TOKEN }}

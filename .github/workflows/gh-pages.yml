@@ -1,0 +1,113 @@
+name: Github Pages Pipeline
+on:
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - master
+  #     - rc
+  #     - dev
+  # pull_request:
+  #   branches-ignore:
+  #     - 'master' # PRs that target master do not execute the action automatically
+
+env:
+  NODE_VERSION: 16
+  GITHUB_TOKEN: ${{ secrets.READ_PACKAGE_TOKEN }}
+  NODE_ENV: 'pipeline'
+  JWT_SECRET_PVT: 'dummydummy'
+  JWT_SECRET_PUB: 'dummydummy'
+
+jobs:
+  #===========================
+  #
+  #  DOC PIPELINE
+  #
+  #============================
+  prepare-documentation:
+    name: Prepare Documentation
+    runs-on: ubuntu-latest
+    outputs:
+      github_stage: ${{ steps.bitvavo.outputs.github_stage }}
+    services:
+      mysql:
+        image: ghcr.io/bitvavo/mysql:5.7.4
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.READ_PACKAGE_TOKEN }}
+        env:
+          MYSQL_DATABASE: bitvavo
+          MYSQL_ROOT_PASSWORD: 'xs2mysql'
+        ports:
+          - 3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Cache global npm
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-gh-pages-global-node-modules
+        with:
+          # npm cache files are stored in `~/.npm` on Linux/macOS
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Cache local node_modules
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-gh-pages-modules
+        with:
+          path: 'node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+      - name: Run Bitvavo actions
+        id: bitvavo
+        uses: ./.github/actions/bitvavo-actions
+        with:
+          run-install: true
+          aws-setup: false
+      - name: Generate documentation
+        env:
+          MYSQL_HOST: '127.0.0.1'
+          MYSQL_USER: 'root'
+          MYSQL_ROOT_PASSWORD: 'xs2mysql'
+          MYSQL_PORT: ${{ job.services.mysql.ports['3306'] }}
+          AUTH0_JWKS_URI: https://dev-bitvavo.eu.auth0.com/.well-known/jwks.json
+          AUTH0_ISSUER: https://login.dev.vavo.dev/
+          AUTH0_AUDIENCE: https://api.dev.vavo.dev
+        run: |
+          mkdir docs-build
+          mv README.md docs-build
+          npm run typeorm:migrate
+          npm run doc:gen
+          npm run doc:gen:gqlapi
+          mv docs docs-build
+          mv CHANGELOG.md docs-build
+          mv LICENSE docs-build
+          date +%s000 > docs-build/update
+      # generate coverage (it takes lot of time, do we need it?)
+      # - name: Generate test coverage
+      #   env:
+      #     NODE_ENV: 'pipeline'
+      #   run: |
+      #     npm run test:cov
+
+      #
+      # DEPLOY DOCS
+      #
+      - name: Deploy to GH Pages
+        uses: JamesIves/github-pages-deploy-action@4.1.4
+        with:
+          branch: gh-pages
+          folder: docs-build
+          target-folder: ${{ env.STAGE }}
+          clean: true # Automatically remove deleted files from the deploy branch

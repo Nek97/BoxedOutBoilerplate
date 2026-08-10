@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "test",
+    "env",
+    "docs",
+    "var",
+    "apps/**/test",
+    "**/node_modules",
+    "**/*spec.ts",
+    "**/__tests__",
+    "**/__mocks__",
+    "**/.webpack"
+  ]
+}

@@ -1,0 +1,62 @@
+# Provider
+timeout: 30
+memorySize: 1024
+role: arn:aws:iam::066927825542:role/ServerlessCoreAPI
+
+# Account specific
+accountId: '066927825542'
+region: 'eu-west-1'
+
+# Resources
+path: connect-09da75a40c78434a8e56ed9f6279c974
+
+subnetIds:
+  - subnet-086d78ad2af6a4fad
+  - subnet-0eaaa6794fe2c7fe1
+securityGroupIds:
+  - sg-0d1d38d4cf045ca40
+
+# Events
+corsLoginRequired:
+  origin: '*'
+  headers:
+    - Content-Type
+    - X-CSRF-Token
+    - Authorization
+  allowCredentials: true
+
+warmup:
+  default:
+    events:
+      - schedule: cron(0/1 7-19 ? * MON-FRI *)
+    concurrency: 1
+    prewarm: true
+    cleanFolder: false
+
+# Environment variables
+environmentVariables:
+  AWS_FLAG: 15
+  BASE_PATH: '/connect-v3'
+  NEST_LOGGER: 'pino'
+  TYPEORM_LOGGING: true
+  NODE_ENV: 'development'
+  STAGE: '${env:STAGE}'
+  PATH: 'connect-09da75a40c78434a8e56ed9f6279c974'
+  DOMAIN: 'account.bob.dev'
+  GW_MANAGE_PANEL_URL: ${ssm:GW_MANAGE_PANEL_URL}
+  MYSQL_HOST: ${ssm:DB_BOXEDOUT_HOST}
+  MYSQL_USER: 'admin'
+  MYSQL_TOTAL_REPLICATION_NODES: 1
+  MYSQL_REPLICA_HOST_1: ${ssm:DB_BOXEDOUT_HOST_RO}
+  MYSQL_REPLICA_USERNAME_1: 'admin'
+  AWS_REMOTE_KEYID: ${ssm:CRYPT_REMOTE_KEY}
+  REDIS_HOST: ${ssm:/BackendCore/dev/RedisCluster/endpoint}
+  REDIS_PORT: ${ssm:/BackendCore/dev/RedisCluster/port}
+  SENTRY_DSN: ${ssm:SENTRY_DSN}
+  SENTRY_RELEASE: ${env:COMMIT_SHA}
+  S3_BUCKET_ID: ${env:S3_BUCKET_ID, 'dev-user-identity'}
+  S3_BUCKET_POF: ${env:S3_BUCKET_POF, 'dev-proof-of-funds'}
+  S3_REGION: ${env:S3_REGION, 'eu-west-1'}
+  # KMS_REGION: ${env:KMS_REGION, 'eu-west-1'}
+  SQS_REGION: ${env:SQS_REGION, 'eu-west-1'}
+  SQS_ENDPOINT: ${env:SQS_ENDPOINT,'https://sqs.eu-west-1.amazonaws.com/503400996940/'}

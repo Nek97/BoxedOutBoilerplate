@@ -1,0 +1,446 @@
+name: App CLI Pipeline
+on:
+  workflow_dispatch:
+    inputs:
+      skipchecks:
+        description: 'Skip check jobs'
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches:
+      - master
+      - rc
+      - dev
+    paths:
+      - '.github/actions/**'
+      - '.github/workflows/app-cli.yml'
+      - 'apps/cli/**'
+      - 'libs/bitvavo/auth/**'
+      - 'libs/bitvavo-libs/**'
+      - 'libs/common/**'
+      - 'test/**'
+      - 'conf/**'
+      # execute when root level files change
+      - '*'
+  pull_request:
+    branches-ignore:
+      - 'master' # PRs that target master do not execute the action automatically
+    paths:
+      - '.github/actions/**'
+      - '.github/workflows/app-cli.yml'
+      - 'apps/cli/**'
+      - 'libs/bitvavo/auth/**'
+      - 'libs/bitvavo-libs/**'
+      - 'libs/common/**'
+      - 'test/**'
+      - 'conf/**'
+      # execute when root level files change
+      - '*'
+
+env:
+  PROJECT_ID: cli
+  NODE_VERSION: 16
+  # AWS DEV SECRETS
+  AWS_SECRET_DEV_KEY_ID: ${{ secrets.AWS_DEV_ACCESS_KEY_ID }}
+  AWS_SECRET_DEV_KEY: ${{ secrets.AWS_DEV_ACCESS_KEY }}
+  AWS_ACCOUNT_DEV_ID: ${{ secrets.AWS_DEV_ACCOUNT_ID }}
+  # AWS RC SECRETS
+  AWS_SECRET_QA_KEY_ID: ${{ secrets.AWS_RC_ACCESS_KEY_ID }}
+  AWS_SECRET_QA_KEY: ${{ secrets.AWS_RC_ACCESS_KEY }}
+  AWS_ACCOUNT_QA_ID: ${{ secrets.AWS_RC_ACCOUNT_ID }}
+  # AWS PROD SECRETS
+  AWS_SECRET_PROD_KEY_ID: ${{ secrets.AWS_PROD_ACCESS_KEY_ID }}
+  AWS_SECRET_PROD_KEY: ${{ secrets.AWS_PROD_ACCESS_KEY }}
+  AWS_ACCOUNT_PROD_ID: ${{ secrets.AWS_PROD_ACCOUNT_ID }}
+  # other
+  GITHUB_TOKEN: ${{ secrets.READ_PACKAGE_TOKEN }}
+  NODE_ENV: 'pipeline'
+  JWT_SECRET_PVT: 'dummydummy'
+  JWT_SECRET_PUB: 'dummydummy'
+jobs:
+  #===========================
+  #
+  #  PREPARE PIPELINE
+  #
+  #============================
+  prepare-pipeline:
+    name: Prepare Pipeline
+    runs-on: ubuntu-latest
+    outputs:
+      github_stage: ${{ steps.bitvavo.outputs.github_stage }}
+      project_id: ${{ steps.bitvavo.outputs.project_id }}
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Cache global npm
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-${{ env.PROJECT_ID }}-global-node-modules
+        with:
+          # npm cache files are stored in `~/.npm` on Linux/macOS
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Cache local node_modules
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-${{ env.PROJECT_ID }}-modules
+        with:
+          path: 'node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+      - name: Run Bitvavo actions
+        id: bitvavo
+        with:
+          run-install: true
+          project-id: ${{ env.PROJECT_ID }}
+        uses: ./.github/actions/bitvavo-actions
+      # to make sure that the bitvavo actions worked
+      - name: Check npm version
+        run: npm --version
+
+  #===========================
+  #
+  #  RUN PARALLEL JOBS
+  #
+  #============================
+  linter:
+    if: github.event.inputs.skipchecks != 'true'
+    name: Linter Checks
+    needs: prepare-pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Restore node_modules cache
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-${{ env.PROJECT_ID }}-modules
+        with:
+          path: 'node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+      - name: Run Bitvavo actions
+        id: bitvavo
+        with:
+          project-id: ${{ env.PROJECT_ID }}
+        uses: ./.github/actions/bitvavo-actions
+      - name: Lint check
+        run: npm run lint:path --lintpath=apps/${{ env.PROJECT_ID }};
+
+  test-unit:
+    if: github.event.inputs.skipchecks != 'true'
+    name: Unit Tests
+    needs: prepare-pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Restore node_modules cache
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-${{ env.PROJECT_ID }}-modules
+        with:
+          path: 'node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+      - name: Run Bitvavo actions
+        id: bitvavo
+        with:
+          project-id: ${{ env.PROJECT_ID }}
+        uses: ./.github/actions/bitvavo-actions
+      - name: Test coverage
+        run: npm run test:cov -- --ci apps/${{ env.PROJECT_ID }};
+      - name: Upload coverage artifacts
+        if: steps.bitvavo.outputs.github_stage != 'other' # deploy only for dev, qa and prod
+        uses: actions/upload-artifact@master
+        with:
+          name: apps-${{ env.PROJECT_ID }}
+          path: docs/compodoc/jestcoverage/apps/${{ env.PROJECT_ID }}
+          retention-days: 80
+
+  dry-runs:
+    if: github.event.inputs.skipchecks != 'true'
+    name: Dry runs
+    needs: prepare-pipeline
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: ghcr.io/bitvavo/mysql:5.7.4
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.READ_PACKAGE_TOKEN }}
+        env:
+          MYSQL_DATABASE: bitvavo
+          MYSQL_ROOT_PASSWORD: 'xs2mysql'
+        ports:
+          - 3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Restore node_modules cache
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-${{ env.PROJECT_ID }}-modules
+        with:
+          path: 'node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+      - name: Run Bitvavo actions
+        id: bitvavo
+        with:
+          project-id: ${{ env.PROJECT_ID }}
+        uses: ./.github/actions/bitvavo-actions
+      - name: Dry runs
+        env:
+          MYSQL_HOST: '127.0.0.1'
+          MYSQL_USER: 'root'
+          MYSQL_ROOT_PASSWORD: 'xs2mysql'
+          MYSQL_PORT: ${{ job.services.mysql.ports['3306'] }}
+        run: |
+          npm run typeorm:initdb;
+          npm run typeorm:migrate;
+          npm run typeorm:reseed;
+
+  image-creation:
+    env:
+      DOCKER_BUILDKIT: 1
+    name: Image creation
+    needs: prepare-pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Run Bitvavo actions
+        id: bitvavo
+        with:
+          project-id: ${{ env.PROJECT_ID }}
+        uses: ./.github/actions/bitvavo-actions
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1.5.5
+        with:
+          aws-access-key-id: ${{ env.AWS_SECRET_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.PUBLISH_TOKEN }}
+      - name: Pull image for cache
+        env:
+          IMAGE_TAG: ${{ env.PROJECT_ID }}-latest
+        run: docker pull ghcr.io/bitvavo/backend-core-api/${{ env.PROJECT_ID }}:${IMAGE_TAG} || true
+      - name: Build image
+        env:
+          IMAGE_TAG_VERSION: ${{ env.CORE_API_VERSION }}
+          IMAGE_TAG_LATEST: ${{ env.PROJECT_ID }}-latest
+        run: |
+          docker build \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --build-arg DOCKER_ENV=${{ env.DOCKER_ENV}} \
+            --build-arg GITHUB_TOKEN=${{ secrets.PUBLISH_TOKEN }} \
+            --build-arg APP_ID=${{ env.PROJECT_ID }} \
+            --cache-from=ghcr.io/bitvavo/backend-core-api/${{ env.PROJECT_ID }}:${{ env.IMAGE_TAG_LATEST }} \
+            --target distribution-istio \
+            -t ghcr.io/bitvavo/backend-core-api/${{ env.PROJECT_ID }}:${{ env.IMAGE_TAG_LATEST }} \
+            -t ghcr.io/bitvavo/backend-core-api/${{ env.PROJECT_ID }}:${{ env.IMAGE_TAG_VERSION }} .
+      - name: Deploy image to Amazon ECR and Github
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: backend-core-api
+          IMAGE_TAG: ${{ env.PROJECT_ID }}-latest
+        if: steps.bitvavo.outputs.github_stage != 'other' # deploy only for dev, qa and prod
+        run: |
+          docker push --all-tags ghcr.io/bitvavo/backend-core-api/${{ env.PROJECT_ID }}
+
+  #===========================
+  #
+  #  DEPLOY STAGE
+  #
+  #============================
+
+  #
+  # TODO: code used for serverless, to remove
+  #
+  # deploy:
+  #   name: Deploy app
+  #   needs: [prepare-pipeline, test-unit, linter, dry-runs, image-creation]
+  #   concurrency: ci-${{ github.workflow }}-deploy-${{ github.ref }}
+  #   # deploy only for dev, qa and prod
+  #   # verbose condition needed because of this limitation: https://github.com/actions/runner/issues/491#issuecomment-850884422
+  #   # also, the wildcard can't work in this case because we can have 1 on success and the other on skipped
+  #   # contains('
+  #   # refs/heads/dev
+  #   # refs/heads/master
+  #   # refs/heads/rc
+  #   # ', github.ref)
+  #   if: |
+  #     always() &&
+  #     (needs.prepare-pipeline.result == 'success') &&
+  #     (needs.image-creation.result == 'success' || needs.image-creation.result == 'skipped') &&
+  #     (needs.test-unit.result == 'success' || needs.test-unit.result == 'skipped') &&
+  #     (needs.linter.result == 'success' || needs.linter.result == 'skipped') &&
+  #     (needs.dry-runs.result == 'success' || needs.dry-runs.result == 'skipped')
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Use Node.js
+  #       uses: actions/setup-node@v1
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #       with:
+  #         submodules: 'recursive'
+  #         token: ${{ secrets.PUBLISH_TOKEN }}
+  #     - name: Restore node_modules cache
+  #       uses: actions/cache@v3
+  #       env:
+  #         cache-name: cache-${{ env.PROJECT_ID }}-modules
+  #       with:
+  #         path: 'node_modules'
+  #         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+  #     - name: Run Bitvavo actions
+  #       id: bitvavo
+  #       with:
+  #         project-id: ${{ env.PROJECT_ID }}
+  #       uses: ./.github/actions/bitvavo-actions
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v1.5.5
+  #       with:
+  #         aws-access-key-id: ${{ env.AWS_SECRET_KEY_ID }}
+  #         aws-secret-access-key: ${{ env.AWS_SECRET_KEY }}
+  #         aws-region: ${{ env.AWS_REGION }}
+  #     - name: Login to Amazon ECR
+  #       id: login-ecr
+  #       uses: aws-actions/amazon-ecr-login@v1
+  #     - name: Deploy to SLS 🚀
+  #       env:
+  #         AWS_ACCESS_KEY_ID: ${{ env.AWS_SECRET_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_KEY }}
+  #         NODE_ENV: ${{ env.DOCKER_ENV}}
+  #       run: |
+  #         imageInfo=`aws ecr describe-images --repository-name backend-core-api --image-ids imageTag=${{ env.PROJECT_ID }}-latest`
+  #         echo $imageInfo
+  #         DIGEST=`echo $(jq -r '.imageDetails[0].imageDigest' <<< "$imageInfo")`
+  #         echo $DIGEST
+  #         cd apps/${{ env.PROJECT_ID }};
+  #         DIGEST=$DIGEST npx serverless deploy;
+  #         cd ../../;
+  #     # TODO: it must be reworked, the CLI should possibly not handle the entire migration process (for all apps)
+  #     # also, we should decide when to migrate the db: at the moment if one of the app deployment fails,
+  #     # we cannot automatically revert back the db status
+  #     - name: Migrate DB
+  #       if: steps.bitvavo.outputs.github_stage != 'prod' # deploy only for dev and qa
+  #       env:
+  #         AWS_ACCESS_KEY_ID: ${{ env.AWS_SECRET_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_KEY }}
+  #         NODE_ENV: ${{ env.DOCKER_ENV}}
+  #       run: |
+  #         cd apps/${{ env.PROJECT_ID }};
+  #         npx serverless invoke --function migrate;
+  #         cd ../../;
+
+  k8s-deploy:
+    name: Deploy app on k8s
+    needs: [prepare-pipeline, test-unit, linter, dry-runs, image-creation]
+    concurrency: ci-${{ github.workflow }}-deploy-${{ github.ref }}
+    # deploy only for dev, qa and prod
+    # verbose condition needed because of this limitation: https://github.com/actions/runner/issues/491#issuecomment-850884422
+    # also, the wildcard can't work in this case because we can have 1 on success and the other on skipped
+    if: |
+      always() &&
+      (needs.prepare-pipeline.result == 'success') &&
+      (needs.test-unit.result == 'success' || needs.test-unit.result == 'skipped') &&
+      (needs.linter.result == 'success' || needs.linter.result == 'skipped') &&
+      (needs.dry-runs.result == 'success' || needs.dry-runs.result == 'skipped') &&
+      (needs.image-creation.result == 'success' || needs.image-creation.result == 'skipped') &&
+      contains('
+        refs/heads/dev
+        refs/heads/master
+        refs/heads/rc
+        ', github.ref)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PUBLISH_TOKEN }}
+
+      - name: Set k8s cli job tag
+        id: k8s-setup
+        with:
+          k8s_config_token: ${{ secrets.K8S_CONFIG_TOKEN }}
+          tag_path: .jobs[].image.tag
+          yml_filename: manage-panel
+          push_commit: false
+        uses: ./.github/actions/bitvavo-actions/k8s-deploy
+
+      #
+      # Because of this issue: https://github.com/kubernetes/kubernetes/issues/89657#issuecomment-1038279669
+      # We need to change the name of the job everytime to destroy the previous one
+      # (can't use ttlSecondsAfterFinished, it causes a loop in ArgoCD)
+      #
+      # NOTE about the job name: a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.',
+      # and must start and end with an alphanumeric character
+      # (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')
+      #
+      - name: Change CLI job name and deploy
+        env:
+          IMAGE_TAG_VERSION: ${{ steps.k8s-setup.outputs.package_version }}
+          BRANCH_NAME: ${{ steps.k8s-setup.outputs.github_branch }}
+        shell: bash
+        run: |
+          cd k8s-config
+          FOLDER=${{ steps.k8s-setup.outputs.github_stage }}
+          git config --local user.email "devops@github.com"
+          git config --local user.name "${{ github.actor }}"
+          CUR_DATE=$(date +%Y-%m-%d-%H-%M-%S)
+          export VALUES=$(yq e '.spec.source.helm.values' "$FOLDER/internaltools/manage-panel.yaml" | yq e ".jobs[].name=\"exec-cli-prep-$CUR_DATE\"" -) 
+          [ ! -z "$VALUES" ] && yq e -i '.spec.source.helm.values=strenv(VALUES)'  "$FOLDER/internaltools/manage-panel.yaml" || exit 1
+          export VALUES=$(yq e '.spec.source.helm.values' "$FOLDER/internaltools/manage-panel.yaml" | yq e ".deployment.initContainers[].command[] |= sub(\"manage-panel-exec-cli-prep-([^\s]*) \", \"manage-panel-exec-cli-prep-$CUR_DATE \")" -);
+          [ ! -z "$VALUES" ] && yq e -i '.spec.source.helm.values=strenv(VALUES)'  "$FOLDER/internaltools/manage-panel.yaml" || exit 1
+          git add "$FOLDER/internaltools/manage-panel.yaml"
+          git commit -sm "chore(internaltools/${{ env.PROJECT_ID }}): ${{ env.IMAGE_TAG_VERSION }} from ${{ github.repository }}:${{ env.BRANCH_NAME }}"
+          git push

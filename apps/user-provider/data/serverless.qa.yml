@@ -1,0 +1,50 @@
+# Provider
+timeout: 30
+memorySize: 1024
+role: arn:aws:iam::091215270482:role/ServerlessCoreAPI
+
+# Account specific
+accountId: '091215270482'
+region: 'eu-west-1'
+
+# Resources
+path: connect-v3
+
+subnetIds:
+  - subnet-01d391b4f26836f1a
+  - subnet-02eb4af1bd9b48dad
+securityGroupIds:
+  - sg-0a89a1088e6027106
+
+# Events
+corsLoginRequired:
+  origin: 'https://account.bob.pro'
+  headers:
+    - Content-Type
+    - X-CSRF-Token
+    - Authorization
+  allowCredentials: true
+
+warmup:
+  default:
+    events:
+      - schedule: cron(0/1 7-19 ? * MON-FRI *)
+    concurrency: 1
+    prewarm: true
+    cleanFolder: false
+
+# Environment variables
+environmentVariables:
+  AWS_FLAG: 15
+  # BASE_PATH: '/connect-v3'
+  NEST_LOGGER: 'pino'
+  NODE_ENV: 'production'
+  STAGE: '${env:STAGE}'
+  PATH: 'connect-v3'
+  DOMAIN: 'account.bob.pro'
+  MYSQL_HOST: ${ssm:DB_BOXEDOUT_HOST}
+  MYSQL_USER: ${ssm:DB_CORE_API_USER}
+  MYSQL_TOTAL_REPLICATION_NODES: 1
+  MYSQL_REPLICA_HOST_1: ${ssm:DB_BOXEDOUT_HOST_RO}
+  MYSQL_REPLICA_USERNAME_1: ${ssm:DB_CORE_API_USER}
+  AWS_REMOTE_KEYID: ${ssm:CRYPT_REMOTE_KEY}

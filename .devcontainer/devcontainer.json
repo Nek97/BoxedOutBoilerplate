@@ -1,0 +1,50 @@
+// If you want to run as a non-root user in the container, see .devcontainer/docker-compose.yml.
+{
+  "name": "boxed-out-boilerplate",
+  // set an empty array to automatically solve
+  // the docker-compose files (including the .override.yml)
+  // https://github.com/microsoft/vscode-remote-release/issues/1080#issuecomment-824213014
+  // it requires vscode 1.57+
+  "dockerComposeFile": [],
+  //"initializeCommand": "npx -q cross-env GITHUB_TOKEN=${localEnv:GITHUB_TOKEN} npm run docker:gen:conf",
+  // The 'service' property is the name of the service for the container that VS Code should
+  // use. Update this value and .devcontainer/docker-compose.yml to the real service name.
+  "service": "boxed-out-boilerplate",
+  // The optional 'workspaceFolder' property is the path VS Code should open by default when
+  // connected. This is typically a file mount in .devcontainer/docker-compose.yml
+  "workspaceFolder": "/opt/application",
+  // Set *default* container specific settings.json values on container create.
+  "settings": {},
+  // Add the IDs of extensions you want installed when the container is created.
+  "extensions": [
+    "dbaeumer.vscode-eslint",
+    "eamodio.gitlens",
+    "EditorConfig.EditorConfig",
+    "GitHub.vscode-pull-request-github",
+    "mhutchie.git-graph",
+    "christian-kohler.npm-intellisense",
+    "esbenp.prettier-vscode",
+    "threadheap.serverless-ide-vscode",
+    "rvest.vs-code-prettier-eslint",
+    "eg2.vscode-npm-script",
+    "orta.vscode-jest"
+  ],
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  // "forwardPorts": [],
+  // Uncomment the next line if you want start specific services in your Docker Compose config.
+  "runServices": ["boxed-out-boilerplate", "mysql", "mysql-test", "redis"],
+  // Uncomment the next line if you want to keep your containers running after VS Code shuts down.
+  // "shutdownAction": "none",
+  // Uncomment the next line to run commands after the container is created - for example installing curl.
+  // "postCreateCommand": "apt-get update && apt-get install -y curl",
+  // Uncomment to connect as a non-root user if you've added one. See https://aka.ms/vscode-remote/containers/non-root.
+  "remoteUser": "node",
+  // Tells VS Code whether it should run /bin/sh -c "while sleep 1000; do :; done"
+  // when starting the container instead of the container's default command.
+  "overrideCommand": true,
+  "hostRequirements": {
+    "memory": "15gb",
+    "storage": "20gb",
+    "cpus": 8
+  }
+}

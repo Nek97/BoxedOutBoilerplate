@@ -1,0 +1,17 @@
+// @ts-nocheck
+import './1636384462761-userFile';
+import './1638794223834-userList';
+import './1638897055987-userId-remove-db-files';
+import './1639038182337-2fa-timestamp-userList';
+import './1639740324223-failed-login-attempts';
+import './1640349437166-multipartUploadInfo';
+import './1640695689000-userFiles-type-nullable';
+import './1640698532205-userProofOfFunds-fileUuids-nullable';
+import './1641903123356-drop-multipartUploadInfo';
+import './1641903725824-userFiles-type-required';
+import './1643107693694-UpdatePrivacyPolicy';
+import './1646947249971-userAppReviews';
+import './1647337505358-userAddress';
+import './1650983689915-userIdHashColumn';
+import './1652361202128-userIdHashIndex';
+import './1652432945066-userIdSingleIndex';

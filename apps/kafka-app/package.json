@@ -1,0 +1,11 @@
+{
+  "name": "@boxedout-apps/kafka-app",
+  "version": "0.0.3",
+  "description": "BoxedOut Kafka API",
+  "author": "BoxedOut",
+  "private": true,
+  "dependencies": {
+    "microtime": "3.0.0",
+    "mysql2-import": "^5.0.21"
+  }
+}

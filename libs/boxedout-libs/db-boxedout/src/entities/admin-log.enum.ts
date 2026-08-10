@@ -1,0 +1,23 @@
+// @ts-nocheck
+export enum AdminLogTypeEnum {
+  TRANSACTION_REJECTED = 'transaction_rejected',
+  USER_INSPECTION_RISK = 'user_inspection_risk',
+  ACCOUNT_VIEW = 'account_view',
+  BANK_ACCOUNT_PENDING = 'bank_account_pending',
+  ID_INFO_EXTRACTED = 'id_info_extracted',
+  ID_INSPECTED_EXTRACT = 'id_inspected_extract',
+  USER_DELETE = 'user_delete',
+  USER_LOCK = 'user_lock',
+  USER_NOTE_VIEW = 'user_note_view',
+  USER_NOTE = 'user_note',
+  USER_ID_UPLOAD = 'user_id_upload',
+  USER_EDITED = 'user_edited',
+  BOXEDOUT_BALANCE_ADJUSTED = 'boxedout_balance_adjusted',
+  TRANSACTION_APPROVED = 'transaction_approved',
+  BANK_ACCOUNT_REJECTED = 'bank_account_rejected',
+  BANK_ACCOUNT_APPROVED = 'bank_account_approved',
+  ID_REJECTED = 'id_rejected',
+  ID_APPROVED = 'id_approved',
+  ID_INSPECTED = 'id_inspected',
+  BUNQ_DEPOSIT_ASSIGNED = 'bunq_deposit_assigned',
+}
